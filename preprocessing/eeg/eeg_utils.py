@@ -17,8 +17,8 @@ class EEGLoader():
     ----------
     subject_id : str
         Subject ID
-    DIRECTORY : str
-        DIRECTORY containing the fif file
+    directory : str
+        directory containing the fif file
     file_extension : str
         File extension of the fif file
     is_subcortex : bool | False
@@ -40,11 +40,11 @@ class EEGLoader():
     >>> raw = eeg_loader.get_raw()
 
     """
-    def __init__(self, subject_id, DIRECTORY, file_extension, is_subcortex=False, is_ABR=False):
+    def __init__(self, subject_id, directory, file_extension, is_subcortex=False, is_ABR=False):
         self.subject_id = subject_id
-        self.DIRECTORY = DIRECTORY
+        self.directory = directory
         self.filename = f'{self.subject_id}{file_extension}'
-        self.filelocation = os.path.join(self.DIRECTORY, self.filename)
+        self.filelocation = os.path.join(self.directory, self.filename)
         self.is_subcortex_ = is_subcortex
         self.is_ABR = is_ABR
         self.raw_ = mne.io.read_raw_fif(self.filelocation, preload=False)

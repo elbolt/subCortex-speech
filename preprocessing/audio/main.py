@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ]
 
     # Path to my `audiofiles` folder
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data/audiofiles')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/audiofiles')
 
     # Path to the folders containing the wav files, TextGrids, and output of the AN model
     wav_folder = SSD_dir / 'raw'

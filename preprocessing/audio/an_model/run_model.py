@@ -51,15 +51,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Path to my `Zilany_2014` folder
-    DIRECTORY = '/Volumes/NeuroSSD/Midcortex/data/audiofiles/Zilany_2014'
+    directory = '/Volumes/NeuroSSD/subCortex-speech/data/audiofiles/Zilany_2014'
 
     # Path to outpt folders configuration
     if args.input_type == 'inverted':
-        folder_in = os.path.join(DIRECTORY, 'input_arrays_inverted')
-        folder_out = os.path.join(DIRECTORY, 'an_rate_arrays_inverted')
+        folder_in = os.path.join(directory, 'input_arrays_inverted')
+        folder_out = os.path.join(directory, 'an_rate_arrays_inverted')
     else:
-        folder_in = os.path.join(DIRECTORY, 'input_arrays')
-        folder_out = os.path.join(DIRECTORY, 'an_rate_arrays')
+        folder_in = os.path.join(directory, 'input_arrays')
+        folder_out = os.path.join(directory, 'an_rate_arrays')
 
     # Signal parameters
     SFREQ_COCHLEA = 100e3  # sfreq for model

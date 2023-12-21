@@ -16,17 +16,17 @@ class FeatureTargetLoader():
     ----------
     subject_id : str
         Subject ID.
-    DIRECTORY : str
-        DIRECTORY where the project is located.
+    directory : str
+        directory where the project is located.
     feature_type : str
         Type of features to use. Can be `envelope` or `an_rates`.
     is_subcortex : bool | False
         Whether to use subcortical data or not.
 
     """
-    def __init__(self, subject_id, DIRECTORY, feature_type='envelope', is_subcortex=False):
+    def __init__(self, subject_id, directory, feature_type='envelope', is_subcortex=False):
         self.subject_id = subject_id
-        self.DIRECTORY = DIRECTORY
+        self.directory = directory
         self.feature_type = feature_type
         self.is_subcortex = is_subcortex
 
@@ -37,7 +37,7 @@ class FeatureTargetLoader():
     def set_file_names(self):
         """ Sets the file names of the feature and EEG data.
 
-        Preprocessed EEG files need to be of shape (n_epochs, n_channels, n_times) and stored in a DIRECTORY such as:
+        Preprocessed EEG files need to be of shape (n_epochs, n_channels, n_times) and stored in a directory such as:
 
         EEG/
             TRF/
@@ -51,7 +51,7 @@ class FeatureTargetLoader():
                         p02_cortex.npy
                         ...
 
-        Preprocessed features need be of shape (n_epochs, 1, n_times) and stored in a DIRECTORY such as:
+        Preprocessed features need be of shape (n_epochs, 1, n_times) and stored in a directory such as:
 
         audiofiles/
             features/
@@ -66,19 +66,19 @@ class FeatureTargetLoader():
             filename = f'subcortex/{self.subject_id}_subcortex.npy'
         elif not self.is_subcortex:
             filename = f'cortex/{self.subject_id}_cortex.npy'
-        self.eeg_file = self.DIRECTORY / EEG_dir / filename
+        self.eeg_file = self.directory / EEG_dir / filename
 
         feature_dir = 'audiofiles/features'
 
         if self.feature_type == 'envelope':
             filename_normal = 'envelopes.npy'
-            self.feature_file = self.DIRECTORY / feature_dir / filename_normal
+            self.feature_file = self.directory / feature_dir / filename_normal
 
         elif self.feature_type == 'an_rates':
             filename_normal = 'an_rates.npy'
             filename_invert = 'an_rates_inverted.npy'
-            self.feature_file = self.DIRECTORY / feature_dir / filename_normal
-            self.feature_file_invert = self.DIRECTORY / feature_dir / filename_invert
+            self.feature_file = self.directory / feature_dir / filename_normal
+            self.feature_file_invert = self.directory / feature_dir / filename_invert
 
     def check_arguments(self):
         """ Checks whether the arguments and paths are valid.
@@ -91,7 +91,7 @@ class FeatureTargetLoader():
         elif not self.is_subcortex and self.feature_type != 'envelope':
             raise ValueError('`envelope` only works for `is_subcortex=False`.')
 
-        if self.DIRECTORY.is_dir() is False:
+        if self.directory.is_dir() is False:
             raise ValueError(f'File {self.eeg_file} does not exist.')
         if self.feature_file.is_file() is False:
             raise ValueError(f'File {self.feature_file} does not exist.')

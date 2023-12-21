@@ -17,15 +17,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Path to my `Zilany_2014` folder
-    DIRECTORY = Path('/Volumes/NeuroSSD/Midcortex/data/audiofiles/Zilany_2014')
+    directory = Path('/Volumes/NeuroSSD/subCortex-speech/data/audiofiles/Zilany_2014')
 
     # Path to outpt folders configuration
     if args.input_type == 'inverted':
-        folder_in = DIRECTORY / 'an_rate_arrays_inverted'
-        folder_out = DIRECTORY / 'anm_features_inverted'
+        folder_in = directory / 'an_rate_arrays_inverted'
+        folder_out = directory / 'anm_features_inverted'
     else:
-        folder_in = DIRECTORY / 'an_rate_arrays'
-        folder_out = DIRECTORY / 'anm_features'
+        folder_in = directory / 'an_rate_arrays'
+        folder_out = directory / 'anm_features'
 
     folder_out.mkdir(exist_ok=True)
 

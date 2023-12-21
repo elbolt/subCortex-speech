@@ -9,7 +9,7 @@ if __name__ == '__main__':
     print('Running: ', __file__)
 
     # Paths to my data directories
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data')
     results_cortex_dir = SSD_dir / 'EEG/TRF/weights/cortex'
     results_subcortex_dir = SSD_dir / 'EEG/TRF/weights/subcortex'
     results_cortex_dir.mkdir(parents=True, exist_ok=True)

@@ -9,17 +9,17 @@ class SpeechWaveExtractor():
     """ Class to load audio data from a wav and TextGrid.
 
     This class is used to load audio data from a wav and TextGrid. The class is initialized with a wav name,
-    DIRECTORY, and TextGrid DIRECTORY. The wav name is used to load the wav, and the DIRECTORY and TextGrid
-    DIRECTORY are used to load the wav and TextGrid, respectively.
+    directory, and TextGrid directory. The wav name is used to load the wav, and the directory and TextGrid
+    directory are used to load the wav and TextGrid, respectively.
 
     Parameters
     ----------
     filename : str
         Name of the wav
-    DIRECTORY : str
-        Directory containing the wav
-    TG_DIRECTORY : str
-        Directory containing the Praat TextGrids
+    directory : str
+        directory containing the wav
+    TG_directory : str
+        directory containing the Praat TextGrids
 
     Returns
     -------
@@ -29,19 +29,19 @@ class SpeechWaveExtractor():
         Speech wave array of the wav
 
     """
-    def __init__(self, filename, DIRECTORY, TG_DIRECTORY):
+    def __init__(self, filename, directory, TG_directory):
         self.filename = filename
-        self.DIRECTORY = DIRECTORY
-        self.TG_DIRECTORY = TG_DIRECTORY
+        self.directory = directory
+        self.TG_directory = TG_directory
 
         self.extract_wave()
 
     def extract_wave(self):
         """ Gets speech wave from an audio segment and removes silent seconds from the beginning of the segment. """
-        filelocation = Path(self.DIRECTORY) / f'{self.filename}.wav'
+        filelocation = Path(self.directory) / f'{self.filename}.wav'
         self.sfreq, wave = wavfile.read(filelocation)
 
-        grid_file = Path(self.TG_DIRECTORY) / f'{self.filename}.TextGrid'
+        grid_file = Path(self.TG_directory) / f'{self.filename}.TextGrid'
         text_grid = textgrid.TextGrid.fromFile(grid_file)
 
         silent_seconds = text_grid[0][0].time
@@ -57,17 +57,17 @@ class NerveRatesExtractor(SpeechWaveExtractor):
     """ Subclass of SpeechWaveExtractor to load nerve rates.
 
     This class is used to load nerve rates from a numpy and TextGrid file. The class is initialized with a filename,
-    DIRECTORY, and TextGrid DIRECTORY. The filename is used to load the numpy file, and the DIRECTORY and TextGrid
-    DIRECTORY are used to load the numpy and TextGrid, respectively.
+    directory, and TextGrid directory. The filename is used to load the numpy file, and the directory and TextGrid
+    directory are used to load the numpy and TextGrid, respectively.
 
     Parameters
     ----------
     filename : str
         Name of the numpy file
-    DIRECTORY : str
-        DIRECTORY containing the numpy file
-    TG_DIRECTORY : str
-        DIRECTORY containing the Praat TextGrids
+    directory : str
+        directory containing the numpy file
+    TG_directory : str
+        directory containing the Praat TextGrids
 
     Returns
     -------
@@ -78,11 +78,11 @@ class NerveRatesExtractor(SpeechWaveExtractor):
 
     """
     def extract_wave(self):
-        filelocation = Path(self.DIRECTORY) / f'{self.filename}_an_rates_44.1k.npy'
+        filelocation = Path(self.directory) / f'{self.filename}_an_rates_44.1k.npy'
         self.sfreq = 44.1e3
         wave = np.load(filelocation)
 
-        grid_file = Path(self.TG_DIRECTORY) / f'{self.filename}.TextGrid'
+        grid_file = Path(self.TG_directory) / f'{self.filename}.TextGrid'
         text_grid = textgrid.TextGrid.fromFile(grid_file)
 
         silent_seconds = text_grid[0][0].time
@@ -95,28 +95,28 @@ class WaveProcessor():
     """ Class to process speech wave arrays.
 
     This class is used to process speech wave arrays, such as downsampling, filtering, and extracting the Gammatone
-    envelope. The class is initialized with a file name, DIRECTORY, and TextGrid DIRECTORY. The sampling frequency
+    envelope. The class is initialized with a file name, directory, and TextGrid directory. The sampling frequency
     and speech wave signal are updated after each processing step.
 
     Parameters
     ----------
     filename : str
         Name of the file
-    DIRECTORY : str
-        DIRECTORY containing the file
-    TG_DIRECTORY : str
-        DIRECTORY containing the Praat TextGrids
+    directory : str
+        directory containing the file
+    TG_directory : str
+        directory containing the Praat TextGrids
     is_subcortex : bool | False
         Whether the data is for subcortical analysis or not
 
     """
-    def __init__(self, filename, DIRECTORY, TG_DIRECTORY, is_subcortex=False):
+    def __init__(self, filename, directory, TG_directory, is_subcortex=False):
         self.is_subcortex = is_subcortex
 
         if is_subcortex:
-            extractor = NerveRatesExtractor(filename=filename, DIRECTORY=DIRECTORY, TG_DIRECTORY=TG_DIRECTORY)
+            extractor = NerveRatesExtractor(filename=filename, directory=directory, TG_directory=TG_directory)
         else:
-            extractor = SpeechWaveExtractor(filename=filename, DIRECTORY=DIRECTORY, TG_DIRECTORY=TG_DIRECTORY)
+            extractor = SpeechWaveExtractor(filename=filename, directory=directory, TG_directory=TG_directory)
 
         self.sfreq, self.wave = extractor.get_wave()
 

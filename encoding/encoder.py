@@ -1,7 +1,7 @@
 from encoder_utils import FeatureTargetLoader, Preparer, Encoder
 
 
-def run_subcortical(subject, DIRECTORY, alphas, invert=False):
+def run_subcortical(subject, directory, alphas, invert=False):
     """ Runs the subcortical encoding model.
 
     The data is loaded using the FeatureTargetLoader class, prepared using the Preparer class, and then encoded using
@@ -11,8 +11,8 @@ def run_subcortical(subject, DIRECTORY, alphas, invert=False):
     ----------
     subject : str
         Subject ID.
-    DIRECTORY : str
-        DIRECTORY where the data is stored.
+    directory : str
+        directory where the data is stored.
     alphas : list
         List of alphas to perform grid search over.
     invert : bool | False
@@ -36,7 +36,7 @@ def run_subcortical(subject, DIRECTORY, alphas, invert=False):
 
     loader = FeatureTargetLoader(
         subject,
-        DIRECTORY,
+        directory,
         feature_type='an_rates',
         is_subcortex=True
     )
@@ -68,7 +68,7 @@ def run_subcortical(subject, DIRECTORY, alphas, invert=False):
     return response, test_score, alpha_scores, best_alpha, lags
 
 
-def run_cortical(subject, DIRECTORY, alphas):
+def run_cortical(subject, directory, alphas):
     """
     Runs the subcortical encoding model.
 
@@ -80,8 +80,8 @@ def run_cortical(subject, DIRECTORY, alphas):
     ----------
     subject : str
         Subject ID.
-    DIRECTORY : str
-        DIRECTORY where the data is stored.
+    directory : str
+        directory where the data is stored.
     alphas : list
         List of alphas to perform grid search over.
 
@@ -104,7 +104,7 @@ def run_cortical(subject, DIRECTORY, alphas):
 
     loader = FeatureTargetLoader(
         subject,
-        DIRECTORY,
+        directory,
         feature_type='envelope'
     )
     feature, eeg = loader.get_data()

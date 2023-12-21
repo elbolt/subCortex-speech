@@ -4,7 +4,7 @@ from audio_utils import WaveProcessor
 from tqdm import tqdm
 
 
-def create(FEATURE_DIR, TG_DIR, OUT_DIR, segments_list, is_inverted=False):
+def create(FEATURE_DIR, TG_DIR, out_dir, segments_list, is_inverted=False):
     """ Creates a numpy file with nerve rates. """
 
     # feature parameters
@@ -30,4 +30,4 @@ def create(FEATURE_DIR, TG_DIR, OUT_DIR, segments_list, is_inverted=False):
 
     npyfile = 'an_rates_inverted.npy' if is_inverted else 'an_rates.npy'
 
-    np.save(os.path.join(OUT_DIR, npyfile), feature)
+    np.save(os.path.join(out_dir, npyfile), feature)

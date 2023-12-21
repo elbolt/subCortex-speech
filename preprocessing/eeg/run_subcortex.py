@@ -8,7 +8,7 @@ import mne
 mne.set_log_level('WARNING')
 
 
-def run_subcortex(RAW_DIR, OUT_DIR, file_extension, subjects_list):
+def run_subcortex(raw_dir, out_dir, file_extension, subjects_list):
     """ Applies the prepreprocessing routine to extract the data for subcortex encoding analysis.
 
     Pipeline:
@@ -22,11 +22,11 @@ def run_subcortex(RAW_DIR, OUT_DIR, file_extension, subjects_list):
 
     Parameters
     ----------
-    RAW_DIR : str
+    raw_dir : str
         Path to raw EEG data.
     file_extension : str
         File extension of raw EEG data files.
-    OUT_DIR : str
+    out_dir : str
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
         List of participant IDs to be processed.
@@ -43,7 +43,7 @@ def run_subcortex(RAW_DIR, OUT_DIR, file_extension, subjects_list):
 
     # Loop over subjects
     for subject_id in subjects:
-        eeg_loader = EEGLoader(subject_id, RAW_DIR, file_extension, is_subcortex=True)
+        eeg_loader = EEGLoader(subject_id, raw_dir, file_extension, is_subcortex=True)
         raw, vertex_channel = eeg_loader.get_raw()
 
         # Notch filter to remove line noise
@@ -76,7 +76,7 @@ def run_subcortex(RAW_DIR, OUT_DIR, file_extension, subjects_list):
         data_cleaned = clean_subcortex_signal(data, SFREQ_TARGET, threshold=100., segment_duration=1.0)
 
         # Save subcortex data
-        filename = os.path.join(OUT_DIR, f'{subject_id}_subcortex.npy')
+        filename = os.path.join(out_dir, f'{subject_id}_subcortex.npy')
         print(f'Saving: {filename}')
         np.save(filename, data_cleaned)
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     print(f'Running: {__file__}')
 
     # Path to my `EEG` folder where data is stored in subfolders
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data/EEG/')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/EEG/')
 
     # Path to my `EEG/raw` folder and file extension
     raw_dir = SSD_dir / 'raw'

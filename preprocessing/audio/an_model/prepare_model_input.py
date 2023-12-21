@@ -17,7 +17,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Path to my `audiofiles` folder where wav files are stored
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data/audiofiles/')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/audiofiles/')
     wav_folder = SSD_dir / 'raw'
 
     # Path to outpt folders configuration

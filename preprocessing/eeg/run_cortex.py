@@ -8,7 +8,7 @@ import mne
 mne.set_log_level('WARNING')
 
 
-def run_cortex(RAW_DIR, OUT_DIR, AEP_OUT_DIR, file_extension, subjects_list):
+def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
     """ Applies the prepreprocessing routine to extract the data for cortex encoding analysis and Auditory Evoked
     Potentials (AEP).
 
@@ -31,11 +31,11 @@ def run_cortex(RAW_DIR, OUT_DIR, AEP_OUT_DIR, file_extension, subjects_list):
 
     Parameters
     ----------
-    RAW_DIR : str
+    raw_dir : str
         Path to raw EEG data.
     file_extension : str
         File extension of raw EEG data files.
-    OUT_DIR : str
+    out_dir : str
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
         List of participant IDs to be processed.
@@ -51,7 +51,7 @@ def run_cortex(RAW_DIR, OUT_DIR, AEP_OUT_DIR, file_extension, subjects_list):
     subjects = parse_arguments(subjects_list)
 
     for subject_id in subjects:
-        eeg_loader = EEGLoader(subject_id, RAW_DIR, file_extension)
+        eeg_loader = EEGLoader(subject_id, raw_dir, file_extension)
         raw = eeg_loader.get_raw()
 
         # Anti-alias-filter, segment and downsample to 512 Hz
@@ -105,14 +105,14 @@ def run_cortex(RAW_DIR, OUT_DIR, AEP_OUT_DIR, file_extension, subjects_list):
         evoked = epochs.copy().crop(tmin=-300e-3, tmax=600e-3)
         evoked.apply_baseline(baseline=(AEP_BASELINE))
         evoked = evoked.average()
-        np.save(os.path.join(AEP_OUT_DIR, f'{subject_id}.npy'), evoked.get_data(picks='eeg'))
+        np.save(os.path.join(AEP_out_dir, f'{subject_id}.npy'), evoked.get_data(picks='eeg'))
 
         # Cut to final length
         epochs.crop(tmin=1.0, tmax=FINAL_LENGTH + 1)
 
         # Save cortex data
         data = epochs.get_data(picks='eeg')
-        filename = os.path.join(OUT_DIR, f'{subject_id}_cortex.npy')
+        filename = os.path.join(out_dir, f'{subject_id}_cortex.npy')
         print(f'Saving: {filename}')
         np.save(filename, data)
 
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     print(f'Running: {__file__}')
 
     # Path to my `EEG` folder
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data/EEG')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/EEG')
 
     # Path to my `EEG/raw` folder and file extension
     raw_dir = SSD_dir / 'raw'

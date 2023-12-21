@@ -8,7 +8,7 @@ import mne
 mne.set_log_level('WARNING')
 
 
-def run_abr(RAW_DIR, OUT_DIR, file_extension, default_subjects):
+def run_abr(raw_dir, out_dir, file_extension, default_subjects):
     """ Applies the prepreprocessing routine to extract the Auditory Brainstem Response (ABR) response. The filtering
     pipeline is identical to `run_cortex.py`.
 
@@ -24,11 +24,11 @@ def run_abr(RAW_DIR, OUT_DIR, file_extension, default_subjects):
 
     Parameters
     ----------
-    RAW_DIR : str
+    raw_dir : str
         Path to raw EEG data.
     file_extension : str
         File extension of raw EEG data files.
-    OUT_DIR : str
+    out_dir : str
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
         List of participant IDs to be processed.
@@ -45,7 +45,7 @@ def run_abr(RAW_DIR, OUT_DIR, file_extension, default_subjects):
 
     # Loop over subjects
     for idx, subject_id in enumerate(subjects):
-        eeg_loader = EEGLoader(subject_id, RAW_DIR, file_extension, is_subcortex=True, is_ABR=True)
+        eeg_loader = EEGLoader(subject_id, raw_dir, file_extension, is_subcortex=True, is_ABR=True)
         raw, vertex_channel = eeg_loader.get_raw()
 
         # Notch filter to remove line noise
@@ -88,7 +88,7 @@ def run_abr(RAW_DIR, OUT_DIR, file_extension, default_subjects):
 
         # Save ABR response
         data = evoked.get_data()
-        filename = os.path.join(OUT_DIR, f'{subject_id}.npy')
+        filename = os.path.join(out_dir, f'{subject_id}.npy')
         print(f'Saving: {filename}')
         np.save(filename, data)
         np.save('no_epochs.npy', no_epochs)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     print(f'Running: {__file__}')
 
     # Path to my `ABR` folder where data is stored in subfolders
-    SSD_dir = Path('/Volumes/NeuroSSD/Midcortex/data/ABR/')
+    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/ABR/')
 
     # Path to my `EEG/raw` folder and file extension
     raw_dir = SSD_dir / 'raw'
