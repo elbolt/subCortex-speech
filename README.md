@@ -2,7 +2,7 @@
 
 ## Description
 
-This repository contains the code for a prepint to (hopefully) be published as:
+This repository contains the code for a manuscript yet to be published.
 *[Info yet to follow.](https://u.rl)*
 
 We share the code for reasons of transparency. The data—EEG and audio files—cannot (yet) be shared. The code is adapted to our environment and data infrastructure, it cannot be executed without adjustments.
