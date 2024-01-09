@@ -12,14 +12,16 @@ mne.set_log_level('WARNING')
 class FeatureTargetLoader():
     """ Class to load feature (speech feature) and target (EEG) data for a given subject and analysis type.
 
+    Note: The paths in this class are very specific to my own data structure and would need a lot of adaption.
+
     Parameters
     ----------
     subject_id : str
         Subject ID.
-    directory : str
-        directory where the project is located.
-    feature_type : str
-        Type of features to use. Can be `envelope` or `an_rates`.
+    directory : pathlib.Path
+        Path to the data directory.
+    feature_type : str | 'envelope'
+        Type of feature to load. Can be `envelope` or `an_rates`.
     is_subcortex : bool | False
         Whether to use subcortical data or not.
 
