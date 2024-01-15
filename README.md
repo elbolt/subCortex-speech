@@ -16,7 +16,7 @@ We share the code for reasons of transparency. The data—EEG and audio files—
 * The EEG and audio file preprocessing pipelines are located in the `preprocessing` folder.
 * In `preprocessing/audio` there is a subfolder called `an_model` which contains the scripts and an additional environment (`an_model_environment.yml`) that I needed to generate the speech features (auditory nerve rates) for subcortical analyses.
 * The pipeline for the encoding analyses is located in the `encoding` folder.
-* Please note that the TRF model is referred to in the scripts as " encoding model" and "encoder" and the regularization parameter λ as "alpha"
+* Please note that the TRF model is referred to in the scripts as "encoding model" and "encoder" and the regularization parameter λ as "alpha"
 
 
 ## Acknowledgments
