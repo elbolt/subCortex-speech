@@ -1,4 +1,4 @@
-# Peprocessing and encoding analysis pipelines for the encoding of natural speech at the subcortical and cortical level
+# Preprocessing and encoding analysis pipelines for the encoding of natural speech at the subcortical and cortical level
 
 ## Description
 
