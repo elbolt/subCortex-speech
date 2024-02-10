@@ -5,84 +5,83 @@ from pathlib import Path
 from scipy.io import wavfile
 
 
-class SpeechWaveExtractor():
-    """ Class to load audio data from a wav and TextGrid.
+class SpeechWaveExtractor:
+    """ Class to load audio data from a wav and TextGrid. """
+    def __init__(self, filename, wav_dir, tg_dir):
+        """
+        Initialize the SpeechWaveExtractor.
 
-    This class is used to load audio data from a wav and TextGrid. The class is initialized with a wav name,
-    directory, and TextGrid directory. The wav name is used to load the wav, and the directory and TextGrid
-    directory are used to load the wav and TextGrid, respectively.
+        My wavs are stereo wav files, with the first channel containing the speech and the second channel containing
+        an impulse vector coding for speech onest. The impulse time point is documented in the TextGrid file since
+        I used Praat to annotate the speech onset. Thus, the file `filename.wav` should be a stereo wav file, and the
+        file `filename.TextGrid` should contain the annotation of the speech onset in the first interval of the first
+        tier.
+        I structered the class such that the names of the wav and TextGrid files are the same.
 
-    Parameters
-    ----------
-    filename : str
-        Name of the wav
-    directory : str
-        directory containing the wav
-    TG_directory : str
-        directory containing the Praat TextGrids
-
-    Returns
-    -------
-    sfreq : float
-        Sampling frequency of the wav
-    wave : np.ndarray
-        Speech wave array of the wav
-
-    """
-    def __init__(self, filename, directory, TG_directory):
+        Parameters
+        ----------
+        filename : str
+            Name of the wav
+        wav_dir : str
+            Directory containing the wav
+        tg_dir : str
+            Directory containing the Praat TextGrids
+        """
         self.filename = filename
-        self.directory = directory
-        self.TG_directory = TG_directory
-
-        self.extract_wave()
+        self.wav_dir = wav_dir
+        self.tg_dir = tg_dir
+        self.sfreq = None
+        self.wave = None
 
     def extract_wave(self):
-        """ Gets speech wave from an audio segment and removes silent seconds from the beginning of the segment. """
-        filelocation = Path(self.directory) / f'{self.filename}.wav'
-        self.sfreq, wave = wavfile.read(filelocation)
+        """
+        Extract speech wave from an audio segment and remove silent seconds from the beginning of the segment.
+        """
+        filelocation = Path(self.wav_dir) / f'{self.filename}.wav'
+        sfreq, wave = wavfile.read(filelocation)
 
-        grid_file = Path(self.TG_directory) / f'{self.filename}.TextGrid'
+        if wave.ndim > 1:
+            wave = wave[:, 0]  # first channel, if stereo
+
+        grid_file = Path(self.tg_dir) / f'{self.filename}.TextGrid'
         text_grid = textgrid.TextGrid.fromFile(grid_file)
 
         silent_seconds = text_grid[0][0].time
-        wave = wave[int(silent_seconds * self.sfreq):]
+        wave = wave[int(silent_seconds * sfreq):]
 
+        self.sfreq = sfreq
         self.wave = wave.astype(np.float64)
 
     def get_wave(self):
+        """
+        Get the speech wave.
+
+        Returns
+        -------
+        sfreq : float
+            Sampling frequency of the wav
+        wave : np.ndarray
+            Speech wave array of the wav
+        """
+        if self.sfreq is None or self.wave is None:
+            self.extract_wave()
+
         return self.sfreq, self.wave
 
 
 class NerveRatesExtractor(SpeechWaveExtractor):
-    """ Subclass of SpeechWaveExtractor to load nerve rates.
-
-    This class is used to load nerve rates from a numpy and TextGrid file. The class is initialized with a filename,
-    directory, and TextGrid directory. The filename is used to load the numpy file, and the directory and TextGrid
-    directory are used to load the numpy and TextGrid, respectively.
-
-    Parameters
-    ----------
-    filename : str
-        Name of the numpy file
-    directory : str
-        directory containing the numpy file
-    TG_directory : str
-        directory containing the Praat TextGrids
-
-    Returns
-    -------
-    sfreq : float
-        Sampling frequency of the nerve rates
-    wave : np.ndarray
-        Nerve rates array of the numpy file
-
-    """
+    """ Subclass of SpeechWaveExtractor to load nerve rates. """
     def extract_wave(self):
-        filelocation = Path(self.directory) / f'{self.filename}_an_rates_44.1k.npy'
+        """
+        Extract speech wave from an audio segment and remove silent seconds from the beginning of the segment.
+
+        Note that I set `sfreq` manually to 44.1 kHz.
+        """
+        filelocation = Path(self.wav_dir) / f'{self.filename}_an_rates_44.1k.npy'
         self.sfreq = 44.1e3
         wave = np.load(filelocation)
 
-        grid_file = Path(self.TG_directory) / f'{self.filename}.TextGrid'
+        grid_file = Path(self.tg_dir) / f'{self.filename}.TextGrid'
         text_grid = textgrid.TextGrid.fromFile(grid_file)
 
         silent_seconds = text_grid[0][0].time
@@ -98,30 +97,44 @@ class WaveProcessor():
     envelope. The class is initialized with a file name, directory, and TextGrid directory. The sampling frequency
     and speech wave signal are updated after each processing step.
 
-    Parameters
-    ----------
-    filename : str
-        Name of the file
-    directory : str
-        directory containing the file
-    TG_directory : str
-        directory containing the Praat TextGrids
-    is_subcortex : bool | False
-        Whether the data is for subcortical analysis or not
-
     """
-    def __init__(self, filename, directory, TG_directory, is_subcortex=False):
+    def __init__(self, filename, wav_dir, tg_dir, is_subcortex=False):
+        """ Initialize the WaveProcessor.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the wav
+        wav_dir : str
+            Directory containing the wav
+        tg_dir : str
+            Directory containing the Praat TextGrids
+        is_subcortex : bool
+            If True, the speech wave is assumed to be the output of the AN model.
+        """
         self.is_subcortex = is_subcortex
 
         if is_subcortex:
-            extractor = NerveRatesExtractor(filename=filename, directory=directory, TG_directory=TG_directory)
+            extractor = NerveRatesExtractor(filename=filename, wav_dir=wav_dir, tg_dir=tg_dir)
         else:
-            extractor = SpeechWaveExtractor(filename=filename, directory=directory, TG_directory=TG_directory)
+            extractor = SpeechWaveExtractor(filename=filename, wav_dir=wav_dir, tg_dir=tg_dir)
 
         self.sfreq, self.wave = extractor.get_wave()
 
     def downsample(self, sfreq_goal, highpass=None, anti_aliasing='1/3'):
+        """ Downsample the speech wave to the target sampling frequency.
 
+        Parameters
+        ----------
+        sfreq_goal : float
+            Target sampling frequency.
+        highpass : float
+            Highpass frequency for anti-aliasing filter.
+        anti_aliasing : str
+            Anti-aliasing filter cutoff. If '1/3', the cutoff is set to 1/3 of the target sfreq,
+            otherwise it is set to the given value.
+
+        """
         lowpass = sfreq_goal / 3.0 if anti_aliasing == '1/3' else int(anti_aliasing)
         l_trans_bandwidth = sfreq_goal / 10.0
         h_trans_bandwidth = None if highpass is None else highpass / 4.0
@@ -146,9 +159,7 @@ class WaveProcessor():
         self.wave = wave_resampled
 
     def extract_Gammatone_envelope(self, num_filters=24, freq_range=(100, 4000)):
-        """ Extracts the Gammatone envelope from the speech wave.
-
-        """
+        """ Extracts the Gammatone envelope from the speech wave. """
         from scipy import signal
 
         filterbank = WaveProcessor.gammatone_filterbank(
