@@ -1,0 +1,12 @@
+# Directory paths
+directories:
+  eeg_raw_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/raw
+  eeg_subcortex_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/TRF/preprocessed/subcortex
+  eeg_cortex_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/TRF/preprocessed/cortex
+  abr_raw_dir: /Volumes/NeuroSSD/subCortex-speech/data/ABR/raw
+  aep_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/evoked
+  abr_dir: /Volumes/NeuroSSD/subCortex-speech/data/ABR/evoked
+
+file_extensions:
+  abr: _ABR_raw.fif
+  eeg: _audiobook_raw.fif

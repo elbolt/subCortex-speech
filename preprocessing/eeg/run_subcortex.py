@@ -2,13 +2,13 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter, clean_subcortex_signal
-from utils import default_subjects, parse_arguments
+from utils import default_subjects, parse_arguments, load_config
 
 import mne
 mne.set_log_level('WARNING')
 
 
-def run_subcortex(raw_dir, out_dir, file_extension, subjects_list):
+def subcortex_pipeline(raw_dir, out_dir, file_extension, subjects_list, config):
     """ Applies the prepreprocessing routine to extract the data for subcortex encoding analysis.
 
     Pipeline:
@@ -30,14 +30,21 @@ def run_subcortex(raw_dir, out_dir, file_extension, subjects_list):
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
         List of participant IDs to be processed.
+    config : dict
+        Configuration dictionary.
 
     """
-    # Neurophysiology parameters
-    TMIN, TMAX = -4.0, 54.0
-    FINAL_LENGTH = 48
-    SFREQ_TARGET = 4096.
-    NOTCH_FREQUENCIES = np.arange(50., (1000. + 1), 50.)
-    NOTCH_WIDTH = 5
+    # Speech epochs parameters
+    speech_epochs_min = config['speech_epochs']['min']
+    speech_epochs_max = config['speech_epochs']['max']
+    final_epoch_length = config['speech_epochs']['final_epoch_length']
+
+    # Neuropysiology parameters for filters and rates
+    subcortex_highpass = config['neurophysiology']['subcortex']['highpass']
+    subcortex_sfreq = config['neurophysiology']['subcortex']['sfreq']
+    notch_frequencies = np.array(config['neurophysiology']['notch']['frequencies'])
+    notch_width = config['neurophysiology']['notch']['width']
+    clean_threshold = config['neurophysiology']['clean_threshold']['subcortex']
 
     subjects = parse_arguments(subjects_list)
 
@@ -47,33 +54,35 @@ def run_subcortex(raw_dir, out_dir, file_extension, subjects_list):
         raw, vertex_channel = eeg_loader.get_raw()
 
         # Notch filter to remove line noise
-        for f, freq in enumerate(NOTCH_FREQUENCIES):
+        for f, freq in enumerate(notch_frequencies):
             raw.notch_filter(
                 freqs=freq,
                 method='iir',
                 iir_params=dict(order=2, ftype='butter', output='sos'),
-                notch_widths=NOTCH_WIDTH
+                notch_widths=notch_width
             )
 
         # Anti-alias-filter, segment and downsample to 4096 Hz
+        decimator = int(raw.info['sfreq'] / subcortex_sfreq)
+
         segmenter = EEGDownSegmenter(
             raw,
             subject_id,
-            tmin=TMIN,
-            tmax=TMAX,
-            decimator=4,
-            highpass=80,
+            tmin=speech_epochs_min,
+            tmax=speech_epochs_max,
+            decimator=decimator,
+            highpass=subcortex_highpass,
             is_subcortex=True,
             is_ABR=False,
         )
         epochs = segmenter.get_epochs()
 
         # Cut to final length
-        epochs.crop(tmin=1.0, tmax=FINAL_LENGTH + 1)
+        epochs.crop(tmin=1.0, tmax=final_epoch_length + 1)
 
         # Clean out segments exceeding 100 µV
         data = epochs.get_data(picks=vertex_channel)
-        data_cleaned = clean_subcortex_signal(data, SFREQ_TARGET, threshold=100., segment_duration=1.0)
+        data_cleaned = clean_subcortex_signal(data, subcortex_sfreq, threshold=clean_threshold, segment_duration=1.0)
 
         # Save subcortex data
         filename = os.path.join(out_dir, f'{subject_id}_subcortex.npy')
@@ -84,15 +93,15 @@ def run_subcortex(raw_dir, out_dir, file_extension, subjects_list):
 if __name__ == '__main__':
     print(f'Running: {__file__}')
 
-    # Path to my `EEG` folder where data is stored in subfolders
-    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/EEG/')
+    config = load_config('config.yaml')
+    eeg_config = load_config('eeg_config.yaml')
 
-    # Path to my `EEG/raw` folder and file extension
-    raw_dir = SSD_dir / 'raw'
-    file_extension = '_audiobook_raw.fif'
-
-    # Path to out folder where processed data will be stored
-    out_dir = SSD_dir / 'TRF/preprocessed/subcortex'
+    # Paths to folders
+    folders = {key: Path(value) for key, value in config['directories'].items()}
+    raw_dir = folders['eeg_raw_dir']
+    out_dir = folders['eeg_subcortex_dir']
     os.makedirs(out_dir, exist_ok=True)
 
-    run_subcortex(raw_dir, out_dir, file_extension, default_subjects)
+    file_extension = config['file_extensions']['eeg']
+
+    subcortex_pipeline(raw_dir, out_dir, file_extension, default_subjects, eeg_config)

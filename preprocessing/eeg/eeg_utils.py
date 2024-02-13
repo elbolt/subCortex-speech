@@ -237,7 +237,7 @@ class EEGDownSegmenter():
         return self.epochs
 
 
-def clean_subcortex_signal(array, sfreq, threshold=100.0, segment_duration=1.0):
+def clean_subcortex_signal(array, sfreq, threshold=100.0e-3, segment_duration=1.0):
     """ Cleans the EEG data by setting segments above a threshold to NaN.
 
     Parameters
@@ -245,7 +245,7 @@ def clean_subcortex_signal(array, sfreq, threshold=100.0, segment_duration=1.0):
     array : numpy array
         EEG data of shape (n_epochs, n_channels, n_samples).
     threshold : float
-        Threshold in microvolts.
+        Threshold in volts.
     sfreq : float
         Sampling frequency in Hz.
     segment_duration : float
@@ -257,14 +257,13 @@ def clean_subcortex_signal(array, sfreq, threshold=100.0, segment_duration=1.0):
         Cleaned EEG data of shape (n_epochs, n_channels, n_samples).
 
     """
-    threshold_uV = threshold / 1e6  # convert microvolts to volts
     segment_length = int(sfreq * segment_duration)  # Number of samples in the segment to zero out
 
     array_cleaned = array.copy()
 
     for i in range(array_cleaned.shape[0]):
 
-        indices = np.where(np.abs(array_cleaned[i, 0, :]) > threshold_uV)[0]
+        indices = np.where(np.abs(array_cleaned[i, 0, :]) > threshold)[0]
 
         for idx in indices:
             start_idx = idx - segment_length // 2

@@ -32,10 +32,10 @@ def create(wav_folder, tg_folder, out_folder, segments_list):
 
     """
     # Neurophysiology parameters
-    FINAL_LENGTH = 48  # s
+    final_epoch_length = 48  # s
     SFREQ_TARGET = 128  # Hz
 
-    feature = np.full((len(segments_list), 1, FINAL_LENGTH * SFREQ_TARGET + 1), np.nan)
+    feature = np.full((len(segments_list), 1, final_epoch_length * SFREQ_TARGET + 1), np.nan)
 
     for idx, snip_id in enumerate(tqdm(segments_list, desc='envelopes')):
         processor = WaveProcessor(snip_id, wav_folder, tg_folder)
@@ -58,7 +58,7 @@ def create(wav_folder, tg_folder, out_folder, segments_list):
 
         envelope = envelope[SFREQ_TARGET:-SFREQ_TARGET]
 
-        envelope = WaveProcessor.padding(envelope, FINAL_LENGTH, SFREQ_TARGET, pad_value=np.nan)
+        envelope = WaveProcessor.padding(envelope, final_epoch_length, SFREQ_TARGET, pad_value=np.nan)
 
         feature[idx, 0, :] = envelope
 

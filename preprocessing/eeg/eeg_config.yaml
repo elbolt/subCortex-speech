@@ -1,0 +1,41 @@
+# Configuration for neurophysiology and speech analysis
+
+# ABR epochs parameters
+abr:
+  min: -0.01  # -10 ms
+  max: 0.03   # 30 ms
+  baseline:
+    start: -0.01  # -10 ms
+    end: -0.005   # -5 ms
+
+# Speech epochs parameters
+speech_epochs:
+  min: -4.0
+  max: 54.0
+  final_epoch_length: 48
+
+# AEP epochs parameters
+aep:
+  min: -0.3    # -300 ms
+  max: 0.6     # 600 ms
+  baseline:
+    start: -0.2   # -200 ms
+    end: -0.05    # -50 ms
+
+# Neurophysiology filters and Rates parameters
+neurophysiology:
+  subcortex:
+    highpass: 80
+    sfreq: 4096.0
+  cortex:
+    bandpass:
+      low: 1.0
+      high: 9.0
+    sfreq: 128.0
+  ica_sfreq: 512.0
+  notch:
+    frequencies: [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+    width: 5
+  clean_threshold:
+    abr: 0.00004  # 40.0 µV
+    subcortex: 0.0001  # 100.0 µV

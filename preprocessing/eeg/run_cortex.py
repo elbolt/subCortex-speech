@@ -2,15 +2,15 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter
-from utils import default_subjects, parse_arguments, ica, IC_dict
+from utils import default_subjects, parse_arguments, ica, IC_dict, load_config
 
 import mne
 mne.set_log_level('WARNING')
 
 
-def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
+def cortex_pipeline(raw_dir, out_dir, aep_out_dir, file_extension, subjects_list, config):
     """ Applies the prepreprocessing routine to extract the data for cortex encoding analysis and Auditory Evoked
-    Potentials (AEP).
+    Potentials (aep).
 
     Pipeline:
         - Load raw data (`EEGLoader` takes care of channel configuration)
@@ -23,11 +23,11 @@ def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
         - Cut to final length of 48 s
         - Save cortex data for encoding analysis
 
-    AEP pipeline:
+    aep pipeline:
         - Copy epochs after final band-pass filter
-        - Crop copy to AEP time window and apply baseline correction
+        - Crop copy to aep time window and apply baseline correction
         - Average across audiobook segments
-        - Save AEP waveform
+        - Save aep waveform
 
     Parameters
     ----------
@@ -38,14 +38,29 @@ def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
     out_dir : str
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
-        List of participant IDs to be processed.
+        List of participant IDs to be processed.\
+    config : dict
+        Configuration dictionary.
 
     """
-    # Neurophysiology parameters
-    TMIN, TMAX = -4.0, 54.0
-    FINAL_LENGTH = 48
-    SFREQ_GOAL = 128.
-    AEP_BASELINE = (-0.200, -0.050)
+    # Speech epochs parameters
+    speech_epochs_min = config['speech_epochs']['min']
+    speech_epochs_max = config['speech_epochs']['max']
+    aep_min = config['aep']['min']
+    aep_max = config['aep']['max']
+    aep_baseline = (
+        config['aep']['baseline']['start'],
+        config['aep']['baseline']['end']
+    )
+    final_epoch_length = config['speech_epochs']['final_epoch_length']
+
+    # Neurophysiology parameters for filters and rates
+    cortex_bandpass = (
+        config['neurophysiology']['cortex']['bandpass']['low'],
+        config['neurophysiology']['cortex']['bandpass']['high']
+    )
+    ica_sfreq = config['neurophysiology']['cortex']['ica_sfreq']
+    cortex_sfreq = config['neurophysiology']['cortex']['sfreq']
 
     # Loop over subjects
     subjects = parse_arguments(subjects_list)
@@ -55,12 +70,13 @@ def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
         raw = eeg_loader.get_raw()
 
         # Anti-alias-filter, segment and downsample to 512 Hz
+        decimator = int(raw.info['sfreq'] / ica_sfreq)
         segmenter = EEGDownSegmenter(
             raw,
             subject_id,
-            tmin=TMIN,
-            tmax=TMAX,
-            decimator=32
+            tmin=speech_epochs_min,
+            tmax=speech_epochs_max,
+            decimator=decimator,
         )
         epochs = segmenter.get_epochs()
 
@@ -77,38 +93,41 @@ def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
         ica.exclude = IC_dict[subject_id]
         ica.apply(epochs)
 
-        del epochs_ica_copy
+        del epochs_ica_copy, decimator
 
         epochs.interpolate_bads(reset_bads=True)
 
         # Anti-alias filter and downsample to 128 Hz
         epochs.filter(
             l_freq=None,
-            h_freq=SFREQ_GOAL / 3.0,
-            h_trans_bandwidth=SFREQ_GOAL / 10.0,
+            h_freq=cortex_sfreq / 3.0,
+            h_trans_bandwidth=cortex_sfreq / 10.0,
             method='fir',
             fir_window='hamming',
             phase='zero'
         )
-        epochs.decimate(4)
 
-        # 1-9 Hz band-pass filter
+        decimator = int(ica_sfreq / cortex_sfreq)
+
+        epochs.decimate(decimator)
+
+        # Final Hz band-pass filter
         epochs.filter(
-            l_freq=1.0,
-            h_freq=9.0,
+            l_freq=cortex_bandpass[0],
+            h_freq=cortex_bandpass[1],
             method='fir',
             fir_window='hamming',
             phase='zero'
         )
 
         # AEP
-        evoked = epochs.copy().crop(tmin=-300e-3, tmax=600e-3)
-        evoked.apply_baseline(baseline=(AEP_BASELINE))
+        evoked = epochs.copy().crop(tmin=aep_min, tmax=aep_max)
+        evoked.apply_baseline(baseline=(aep_baseline))
         evoked = evoked.average()
-        np.save(os.path.join(AEP_out_dir, f'{subject_id}.npy'), evoked.get_data(picks='eeg'))
+        np.save(os.path.join(aep_out_dir, f'{subject_id}.npy'), evoked.get_data(picks='eeg'))
 
         # Cut to final length
-        epochs.crop(tmin=1.0, tmax=FINAL_LENGTH + 1)
+        epochs.crop(tmin=1.0, tmax=final_epoch_length + 1)
 
         # Save cortex data
         data = epochs.get_data(picks='eeg')
@@ -120,17 +139,17 @@ def run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, subjects_list):
 if __name__ == '__main__':
     print(f'Running: {__file__}')
 
-    # Path to my `EEG` folder
-    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/EEG')
+    config = load_config('config.yaml')
+    eeg_config = load_config('eeg_config.yaml')
 
-    # Path to my `EEG/raw` folder and file extension
-    raw_dir = SSD_dir / 'raw'
-    file_extension = '_audiobook_raw.fif'
-
-    # Path to out folder where processed data will be stored
-    out_dir = SSD_dir / 'TRF/preprocessed/cortex'
-    AEP_out_dir = SSD_dir / 'evoked'
+    # Paths to folders
+    folders = {key: Path(value) for key, value in config['directories'].items()}    
+    raw_dir = folders['eeg_raw_dir']
+    out_dir = folders['eeg_cortex_dir']
+    aep_out_dir = folders['aep_dir']
     os.makedirs(out_dir, exist_ok=True)
-    os.makedirs(AEP_out_dir, exist_ok=True)
+    os.makedirs(aep_out_dir, exist_ok=True)
 
-    run_cortex(raw_dir, out_dir, AEP_out_dir, file_extension, default_subjects)
+    file_extension = config['file_extensions']['eeg']
+
+    cortex_pipeline(raw_dir, out_dir, aep_out_dir, file_extension, default_subjects, eeg_config)

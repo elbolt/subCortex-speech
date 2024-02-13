@@ -1,9 +1,15 @@
 import envelopes
 import an_rates
 from pathlib import Path
-
+import yaml
 import mne
 mne.set_log_level('WARNING')
+
+
+def load_config(config_path):
+    """ Load the configuration file. """
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
 
 
 if __name__ == '__main__':
@@ -14,27 +20,21 @@ if __name__ == '__main__':
     inverted speech wave. This step of the pipeline is documented in the subfolder `an_model`.
 
     """
+    config = load_config('config.yaml')
+
     print('Running: ', __file__)
 
-    audiobook_segments = [
-        'snip01', 'snip02', 'snip03', 'snip04', 'snip05', 'snip06', 'snip07', 'snip08', 'snip09', 'snip10',
-        'snip11', 'snip12', 'snip13', 'snip14', 'snip15', 'snip16', 'snip17', 'snip18', 'snip19', 'snip20',
-        'snip21', 'snip22', 'snip23', 'snip24', 'snip25'
-    ]
+    audiobook_segments = config['audiobook_segments']
+    folders = {key: Path(value) for key, value in config['directories'].items()}
 
-    # Path to my `audiofiles` folder
-    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/audiofiles')
+    wav_folder = folders['wav_folder']
+    an_folder = folders['an_folder']
+    an_folder_inverted = folders['an_folder_inverted']
+    tg_folder = folders['tg_folder']
+    out_folder = folders['out_folder']
 
-    # Path to the folders containing the wav files, TextGrids, and output of the AN model
-    wav_folder = SSD_dir / 'raw'
-    an_folder = SSD_dir / 'Zilany_2014' / 'anm_features'
-    an_folder_invered = SSD_dir / 'Zilany_2014' / 'anm_features_inverted'
-    tg_folder = SSD_dir / 'textgrids'
-    out_folder = SSD_dir / 'features'
-
-    # Path to out folder where processed data will be stored
     out_folder.mkdir(parents=True, exist_ok=True)
 
     envelopes.create(wav_folder, tg_folder, out_folder, audiobook_segments)
     an_rates.create(an_folder, tg_folder, out_folder, audiobook_segments)
-    an_rates.create(an_folder_invered, tg_folder, out_folder, audiobook_segments, is_inverted=True)
+    an_rates.create(an_folder_inverted, tg_folder, out_folder, audiobook_segments, is_inverted=True)

@@ -1,4 +1,5 @@
 import mne
+import yaml
 
 default_subjects = [
     'p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08',
@@ -125,6 +126,12 @@ def parse_arguments(default_subjects):
         subjects = default_subjects
 
     return subjects
+
+
+def load_config(config_path):
+    """ Load configuration from YAML file. """
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
 
 # ICA configuration
 ica = mne.preprocessing.ICA(

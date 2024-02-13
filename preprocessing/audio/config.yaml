@@ -1,0 +1,37 @@
+# Configuration for audiobook processing
+
+# List of audiobook segments to process
+audiobook_segments:
+  - snip01
+  - snip02
+  - snip03
+  - snip04
+  - snip05
+  - snip06
+  - snip07
+  - snip08
+  - snip09
+  - snip10
+  - snip11
+  - snip12
+  - snip13
+  - snip14
+  - snip15
+  - snip16
+  - snip17
+  - snip18
+  - snip19
+  - snip20
+  - snip21
+  - snip22
+  - snip23
+  - snip24
+  - snip25
+
+# Directory paths
+directories:
+  wav_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/raw
+  an_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/Zilany_2014/anm_features
+  an_folder_inverted: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/Zilany_2014/anm_features_inverted
+  tg_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/textgrids
+  out_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/features

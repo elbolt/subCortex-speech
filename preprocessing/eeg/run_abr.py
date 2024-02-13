@@ -2,13 +2,13 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter
-from utils import default_subjects, parse_arguments
+from utils import default_subjects, parse_arguments, load_config
 
 import mne
 mne.set_log_level('WARNING')
 
 
-def run_abr(raw_dir, out_dir, file_extension, default_subjects):
+def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
     """ Applies the prepreprocessing routine to extract the Auditory Brainstem Response (ABR) response. The filtering
     pipeline is identical to `run_cortex.py`.
 
@@ -32,39 +32,52 @@ def run_abr(raw_dir, out_dir, file_extension, default_subjects):
         Path to out folder where preprocessed data will be stored.
     subjects_list : list
         List of participant IDs to be processed.
+    config : dict
+        Configuration dictionary.
 
     """
-    # Neurophysiology parameters
-    TMIN, TMAX = -10e-3, 30e-3
-    BASELINE = (-10e-3, -5e-3)
-    NOTCH_FREQUENCIES = np.arange(50., (1000. + 1), 50.)
-    NOTCH_WIDTH = 5
+    # ABR epochs parameters
+    abr_min = config['abr']['min']
+    abr_max = config['abr']['max']
+    abr_baseline = (
+        config['abr']['baseline']['start'],
+        config['abr']['baseline']['end']
+    )
+
+    # Neurophysiology parameters for filters and rates
+    notch_frequencies = np.array(config['neurophysiology']['notch']['frequencies'])
+    notch_width = config['neurophysiology']['notch']['width']
+    subcortex_highpass = config['neurophysiology']['subcortex']['highpass']
+    subcortex_sfreq = config['neurophysiology']['subcortex']['sfreq']
+    clean_threshold_abr = config['neurophysiology']['clean_threshold']['abr']
 
     subjects = parse_arguments(default_subjects)
-    no_epochs = np.zeros(len(subjects)) * np.nan
+    # no_epochs = np.zeros(len(subjects)) * np.nan
 
     # Loop over subjects
-    for idx, subject_id in enumerate(subjects):
+    for _, subject_id in enumerate(subjects):
         eeg_loader = EEGLoader(subject_id, raw_dir, file_extension, is_subcortex=True, is_ABR=True)
         raw, vertex_channel = eeg_loader.get_raw()
 
         # Notch filter to remove line noise
-        for f, freq in enumerate(NOTCH_FREQUENCIES):
+        for _, freq in enumerate(notch_frequencies):
             raw.notch_filter(
                 freqs=freq,
                 method='iir',
                 iir_params=dict(order=2, ftype='butter', output='sos'),
-                notch_widths=NOTCH_WIDTH
+                notch_widths=notch_width
             )
 
         # Anti-alias-filter, segment and downsample to 4096 Hz
+        decimator = int(raw.info['sfreq'] / subcortex_sfreq)
+
         segmenter = EEGDownSegmenter(
             raw,
             subject_id,
-            tmin=TMIN,
-            tmax=TMAX,
-            decimator=4,
-            highpass=80,
+            tmin=abr_min,
+            tmax=abr_max,
+            decimator=decimator,
+            highpass=subcortex_highpass,
             is_subcortex=True,
             is_ABR=True
         )
@@ -72,16 +85,16 @@ def run_abr(raw_dir, out_dir, file_extension, default_subjects):
         epochs = segmenter.get_epochs()
 
         # Baseline correction
-        epochs.apply_baseline(BASELINE)
+        epochs.apply_baseline(abr_baseline)
 
         # Pick vertex channel only
         epochs = epochs.copy().pick_channels([vertex_channel])
 
         # Reject epochs exceeding 40 uV at the vertex channel
-        epochs.drop_bad(reject=dict(eeg=40e-6))
+        epochs.drop_bad(reject=dict(eeg=clean_threshold_abr))
 
-        print(f'No. of epochs: {epochs.get_data(copy=True).shape[0]}')
-        no_epochs[idx] = epochs.get_data(copy=True).shape[0]
+        # print(f'No. of epochs: {epochs.get_data(copy=True).shape[0]}')
+        # no_epochs[_] = epochs.get_data(copy=True).shape[0]
 
         # Average epochs
         evoked = epochs.copy().average()
@@ -91,21 +104,21 @@ def run_abr(raw_dir, out_dir, file_extension, default_subjects):
         filename = os.path.join(out_dir, f'{subject_id}.npy')
         print(f'Saving: {filename}')
         np.save(filename, data)
-        np.save('no_epochs.npy', no_epochs)
+        # np.save('no_epochs.npy', no_epochs)
 
 
 if __name__ == '__main__':
     print(f'Running: {__file__}')
 
-    # Path to my `ABR` folder where data is stored in subfolders
-    SSD_dir = Path('/Volumes/NeuroSSD/subCortex-speech/data/ABR/')
+    config = load_config('config.yaml')
+    eeg_config = load_config('eeg_config.yaml')
 
-    # Path to my `EEG/raw` folder and file extension
-    raw_dir = SSD_dir / 'raw'
-    file_extension = '_ABR_raw.fif'
-
-    # Path to out folder where processed data will be stored
-    out_dir = SSD_dir / 'evoked'
+    # Paths to folders
+    folders = {key: Path(value) for key, value in config['directories'].items()}
+    raw_dir = folders['abr_raw_dir']
+    out_dir = folders['abr_dir']
     os.makedirs(out_dir, exist_ok=True)
 
-    run_abr(raw_dir, out_dir, file_extension, default_subjects)
+    file_extension = config['file_extensions']['abr']
+
+    abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, eeg_config)
