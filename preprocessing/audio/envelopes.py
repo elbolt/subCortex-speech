@@ -6,7 +6,7 @@ from tqdm import tqdm
 import mne
 
 
-def create(wav_folder, tg_folder, out_folder, segments_list):
+def create(wav_folder, tg_folder, out_folder, segments_list, config):
     """ Create feature from audio snips.
 
     This function creates a feature from audio snips. The feature is a 3D array with dimensions
@@ -29,36 +29,42 @@ def create(wav_folder, tg_folder, out_folder, segments_list):
         Folder containing the Praat TextGrids
     out_folder : str
         Folder to save the feature
+    config : dict
+        Configuration dictionary
 
     """
     # Neurophysiology parameters
-    final_epoch_length = 48  # s
-    SFREQ_TARGET = 128  # Hz
+    final_epoch_length = config['envelope']['final_length']
+    sfreq_target = config['envelope']['sfreq']
+    final_bandpass = (
+        config['envelope']['bandpass_start'],
+        config['envelope']['bandpass_stop']
+    )
 
-    feature = np.full((len(segments_list), 1, final_epoch_length * SFREQ_TARGET + 1), np.nan)
+    feature = np.full((len(segments_list), 1, final_epoch_length * sfreq_target + 1), np.nan)
 
     for idx, snip_id in enumerate(tqdm(segments_list, desc='envelopes')):
         processor = WaveProcessor(snip_id, wav_folder, tg_folder)
         processor.downsample(sfreq_goal=12000)
         processor.extract_Gammatone_envelope()
         processor.downsample(sfreq_goal=512)
-        processor.downsample(sfreq_goal=SFREQ_TARGET)
+        processor.downsample(sfreq_goal=sfreq_target)
 
-        SFREQ_TARGET, envelope = processor.get_wave()
+        sfreq_target, envelope = processor.get_wave()
 
         envelope = mne.filter.filter_data(
             envelope,
-            sfreq=SFREQ_TARGET,
-            l_freq=1.0,
-            h_freq=9.0,
+            sfreq=sfreq_target,
+            l_freq=final_bandpass[0],
+            h_freq=final_bandpass[1],
             method='fir',
             fir_window='hamming',
             phase='zero'
         )
 
-        envelope = envelope[SFREQ_TARGET:-SFREQ_TARGET]
+        envelope = envelope[sfreq_target:-sfreq_target]
 
-        envelope = WaveProcessor.padding(envelope, final_epoch_length, SFREQ_TARGET, pad_value=np.nan)
+        envelope = WaveProcessor.padding(envelope, final_epoch_length, sfreq_target, pad_value=np.nan)
 
         feature[idx, 0, :] = envelope
 

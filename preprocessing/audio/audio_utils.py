@@ -1,3 +1,4 @@
+import yaml
 import numpy as np
 import mne
 import textgrid
@@ -264,3 +265,9 @@ class WaveProcessor():
         array_padded = np.pad(array, (0, padding_length), constant_values=pad_value)
 
         return array_padded
+
+
+def load_config(config_path):
+    """ Load configuration from YAML file. """
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)

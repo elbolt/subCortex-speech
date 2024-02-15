@@ -133,6 +133,7 @@ def load_config(config_path):
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
 
+
 # ICA configuration
 ica = mne.preprocessing.ICA(
     n_components=0.999,

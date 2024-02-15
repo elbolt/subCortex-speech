@@ -35,6 +35,6 @@ if __name__ == '__main__':
 
     out_folder.mkdir(parents=True, exist_ok=True)
 
-    envelopes.create(wav_folder, tg_folder, out_folder, audiobook_segments)
-    an_rates.create(an_folder, tg_folder, out_folder, audiobook_segments)
-    an_rates.create(an_folder_inverted, tg_folder, out_folder, audiobook_segments, is_inverted=True)
+    envelopes.create(wav_folder, tg_folder, out_folder, audiobook_segments, config)
+    an_rates.create(an_folder, tg_folder, out_folder, audiobook_segments, config)
+    an_rates.create(an_folder_inverted, tg_folder, out_folder, audiobook_segments, config, is_inverted=True)

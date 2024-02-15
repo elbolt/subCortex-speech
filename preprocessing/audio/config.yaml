@@ -35,3 +35,14 @@ directories:
   an_folder_inverted: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/Zilany_2014/anm_features_inverted
   tg_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/textgrids
   out_folder: /Volumes/NeuroSSD/subCortex-speech/data/audiofiles/features
+
+# Speech features configurations
+envelope:
+  final_length: 48
+  sfreq: 128
+  bandpass_start: 1.0
+  bandpass_stop: 9.0
+
+an_rates:
+  final_length: 48
+  sfreq: 4096
