@@ -164,5 +164,4 @@ cython_debug/
 .ipynb
 
 # My scripts to ignore
-encoding/main_w_plot.py
 preprocessing/eeg/no_epochs.npy

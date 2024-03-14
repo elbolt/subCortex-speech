@@ -2,7 +2,7 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter
-from utils import default_subjects, parse_arguments, ica, IC_dict, load_config
+from utils import parse_arguments, ica, IC_dict, load_config
 
 import mne
 mne.set_log_level('WARNING')
@@ -141,9 +141,10 @@ if __name__ == '__main__':
 
     config = load_config('config.yaml')
     eeg_config = load_config('eeg_config.yaml')
+    subjects = config['subjects']
 
     # Paths to folders
-    folders = {key: Path(value) for key, value in config['directories'].items()}    
+    folders = {key: Path(value) for key, value in config['directories'].items()}
     raw_dir = folders['eeg_raw_dir']
     out_dir = folders['eeg_cortex_dir']
     aep_out_dir = folders['aep_dir']
@@ -152,4 +153,4 @@ if __name__ == '__main__':
 
     file_extension = config['file_extensions']['eeg']
 
-    cortex_pipeline(raw_dir, out_dir, aep_out_dir, file_extension, default_subjects, eeg_config)
+    cortex_pipeline(raw_dir, out_dir, aep_out_dir, file_extension, subjects, eeg_config)

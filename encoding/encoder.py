@@ -1,7 +1,7 @@
 from encoder_utils import FeatureTargetLoader, Preparer, Encoder
 
 
-def run_subcortical(subject, directory, alphas, invert=False):
+def run_subcortical(subject, directory, alphas, tmin=-10e-3, tmax=30e-3, sfreq=4096, invert=False):
     """ Runs the subcortical encoding model.
 
     The data is loaded using the FeatureTargetLoader class, prepared using the Preparer class, and then encoded using
@@ -15,6 +15,12 @@ def run_subcortical(subject, directory, alphas, invert=False):
         directory where the data is stored.
     alphas : list
         List of alphas to perform grid search over.
+    tmin : float | -10e-3
+        Minimum time lag.
+    tmax : float | 30e-3
+        Maximum time lag.
+    sfreq : int | 4096
+        Sampling frequency of the data.
     invert : bool | False
         Whether this is the model using speech features retrieved from inverted speech waves.
 
@@ -28,11 +34,7 @@ def run_subcortical(subject, directory, alphas, invert=False):
         Lags of the model.
     best_alpha : float
         Best alpha found by hyperparameter tuning.
-
     """
-    # Subcortical encoding parameters
-    tmin, tmax = -10e-3, 30e-3
-    sfreq = 4096
 
     loader = FeatureTargetLoader(
         subject,
@@ -65,10 +67,10 @@ def run_subcortical(subject, directory, alphas, invert=False):
 
     response, test_score, lags = encoder.get_data()
 
-    return response, test_score, alpha_scores, best_alpha, lags
+    return response, test_score, lags, alpha_scores, best_alpha
 
 
-def run_cortical(subject, directory, alphas):
+def run_cortical(subject, directory, alphas, tmin=-300e-3, tmax=600e-3, sfreq=128):
     """
     Runs the subcortical encoding model.
 
@@ -84,7 +86,12 @@ def run_cortical(subject, directory, alphas):
         directory where the data is stored.
     alphas : list
         List of alphas to perform grid search over.
-
+    tmin : float | -300e-3
+        Minimum time lag.
+    tmax : float | 600e-3
+        Maximum time lag.
+    sfreq : int | 128
+        Sampling frequency of the data.
 
     Returns
     -------
@@ -98,9 +105,6 @@ def run_cortical(subject, directory, alphas):
         Best alpha found by hyperparameter tuning.
 
     """
-    # Cortical encoding parameters
-    tmin, tmax = -300e-3, 600e-3
-    sfreq = 128
 
     loader = FeatureTargetLoader(
         subject,
@@ -132,4 +136,4 @@ def run_cortical(subject, directory, alphas):
 
     response, test_score, lags = encoder.get_data()
 
-    return response, test_score, lags, best_alpha, alpha_scores
+    return response, test_score, lags, alpha_scores, best_alpha

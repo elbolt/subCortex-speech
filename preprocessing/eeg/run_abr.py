@@ -2,7 +2,7 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter
-from utils import default_subjects, parse_arguments, load_config
+from utils import parse_arguments, load_config
 
 import mne
 mne.set_log_level('WARNING')
@@ -93,9 +93,7 @@ def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
         # Reject epochs exceeding 40 uV at the vertex channel
         epochs.drop_bad(reject=dict(eeg=clean_threshold_abr))
 
-        # print(f'No. of epochs: {epochs.get_data(copy=True).shape[0]}')
-        # no_epochs[_] = epochs.get_data(copy=True).shape[0]
-
+        print(f'No. of epochs: {epochs.get_data(copy=True).shape[0]}')
         # Average epochs
         evoked = epochs.copy().average()
 
@@ -112,6 +110,7 @@ if __name__ == '__main__':
 
     config = load_config('config.yaml')
     eeg_config = load_config('eeg_config.yaml')
+    subjects = config['subjects']
 
     # Paths to folders
     folders = {key: Path(value) for key, value in config['directories'].items()}
@@ -121,4 +120,4 @@ if __name__ == '__main__':
 
     file_extension = config['file_extensions']['abr']
 
-    abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, eeg_config)
+    abr_pipeline(raw_dir, out_dir, file_extension, subjects, eeg_config)

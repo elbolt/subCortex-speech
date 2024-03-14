@@ -2,7 +2,7 @@ import os
 import numpy as np
 from pathlib import Path
 from eeg_utils import EEGLoader, EEGDownSegmenter, clean_subcortex_signal
-from utils import default_subjects, parse_arguments, load_config
+from utils import parse_arguments, load_config
 
 import mne
 mne.set_log_level('WARNING')
@@ -38,6 +38,7 @@ def subcortex_pipeline(raw_dir, out_dir, file_extension, subjects_list, config):
     speech_epochs_min = config['speech_epochs']['min']
     speech_epochs_max = config['speech_epochs']['max']
     final_epoch_length = config['speech_epochs']['final_epoch_length']
+    subjects = config['subjects']
 
     # Neuropysiology parameters for filters and rates
     subcortex_highpass = config['neurophysiology']['subcortex']['highpass']
@@ -95,6 +96,7 @@ if __name__ == '__main__':
 
     config = load_config('config.yaml')
     eeg_config = load_config('eeg_config.yaml')
+    subjects = config['subjects']
 
     # Paths to folders
     folders = {key: Path(value) for key, value in config['directories'].items()}
@@ -104,4 +106,4 @@ if __name__ == '__main__':
 
     file_extension = config['file_extensions']['eeg']
 
-    subcortex_pipeline(raw_dir, out_dir, file_extension, default_subjects, eeg_config)
+    subcortex_pipeline(raw_dir, out_dir, file_extension, subjects, eeg_config)
