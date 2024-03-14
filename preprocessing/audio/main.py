@@ -1,15 +1,11 @@
 import envelopes
+import an_rates_cortical
 import an_rates
 from pathlib import Path
-import yaml
+from audio_utils import load_config
+
 import mne
 mne.set_log_level('WARNING')
-
-
-def load_config(config_path):
-    """ Load the configuration file. """
-    with open(config_path, 'r') as file:
-        return yaml.safe_load(file)
 
 
 if __name__ == '__main__':
@@ -35,6 +31,7 @@ if __name__ == '__main__':
 
     out_folder.mkdir(parents=True, exist_ok=True)
 
+    an_rates_cortical.create(an_folder, tg_folder, out_folder, audiobook_segments, config)
     envelopes.create(wav_folder, tg_folder, out_folder, audiobook_segments, config)
     an_rates.create(an_folder, tg_folder, out_folder, audiobook_segments, config)
     an_rates.create(an_folder_inverted, tg_folder, out_folder, audiobook_segments, config, is_inverted=True)

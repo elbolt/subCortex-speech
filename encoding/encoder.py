@@ -105,7 +105,7 @@ def run_cortical(subject, directory, alphas):
     loader = FeatureTargetLoader(
         subject,
         directory,
-        feature_type='envelope'
+        feature_type='an_rates_cortical'
     )
     feature, eeg = loader.get_data()
 

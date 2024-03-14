@@ -2,10 +2,9 @@
 
 ## Description
 
-This repository contains the code for a manuscript yet to be published.
-*[Info yet to follow.](https://u.rl)*
+This repository contains the code for a manuscript under revision, *[info yet to follow.](https://u.rl)*
 
-We share the code for reasons of transparency. The data—EEG and audio files—cannot (yet) be shared. The code is adapted to our environment and data infrastructure, it cannot be executed without adjustments.
+We share the code for reasons of transparency. The data—EEG and audio files—cannot (yet) be shared. The code is adapted to our environment and data infrastructure and cannot be executed without adjustments.
 
 * The required modules that we have used to execute our code can be found in the `environment.yml` file.
 * All data paths would have to be adapted to your own data infrastructure.
@@ -21,4 +20,4 @@ We share the code for reasons of transparency. The data—EEG and audio files—
 
 ## Acknowledgments
 
-We would like to thank Shan et al. (2022) as we benefited from their published analysis pipeline when generating speech features from auditory nerve rates, GitHub repository [Music_vs_Speech_abr](https://github.com/maddoxlab/Music_vs_Speech_abr) and publication [doi: 10.1101/2022.10.14.512309](https://doi.org/10.1101/2022.10.14.512309).
+We would like to thank Shan et al. (2024) as we benefited from their published analysis pipeline when generating speech features from auditory nerve rates, GitHub repository [Music_vs_Speech_abr](https://github.com/maddoxlab/Music_vs_Speech_abr) and publication [doi:10.1038/s41598-023-50438-0](https://www.nature.com/articles/s41598-023-50438-0).

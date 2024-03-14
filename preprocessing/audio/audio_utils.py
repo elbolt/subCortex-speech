@@ -99,7 +99,7 @@ class WaveProcessor():
     and speech wave signal are updated after each processing step.
 
     """
-    def __init__(self, filename, wav_dir, tg_dir, is_subcortex=False):
+    def __init__(self, filename, wav_dir, tg_dir, is_subcortex=False, use_nerve_rates=False):
         """ Initialize the WaveProcessor.
 
         Parameters
@@ -112,10 +112,15 @@ class WaveProcessor():
             Directory containing the Praat TextGrids
         is_subcortex : bool
             If True, the speech wave is assumed to be the output of the AN model.
+        use_nerve_rates : bool
+            If True, the speech wave is assumed to be the nerve rates output of the AN model.
         """
         self.is_subcortex = is_subcortex
 
-        if is_subcortex:
+        if use_nerve_rates and is_subcortex:
+            raise ValueError('use_nerve_rates can only be True if is_subcortex is False.')
+
+        if is_subcortex or use_nerve_rates:
             extractor = NerveRatesExtractor(filename=filename, wav_dir=wav_dir, tg_dir=tg_dir)
         else:
             extractor = SpeechWaveExtractor(filename=filename, wav_dir=wav_dir, tg_dir=tg_dir)

@@ -21,7 +21,7 @@ class FeatureTargetLoader():
     directory : pathlib.Path
         Path to the data directory.
     feature_type : str | 'envelope'
-        Type of feature to load. Can be `envelope` or `an_rates`.
+        Type of feature to load. Can be `envelope`, `an_rates` or `an_rates_cortical`.
     is_subcortex : bool | False
         Whether to use subcortical data or not.
 
@@ -82,16 +82,20 @@ class FeatureTargetLoader():
             self.feature_file = self.directory / feature_dir / filename_normal
             self.feature_file_invert = self.directory / feature_dir / filename_invert
 
+        elif self.feature_type == 'an_rates_cortical':
+            filename_normal = 'an_rates_cortical.npy'
+            self.feature_file = self.directory / feature_dir / filename_normal
+
     def check_arguments(self):
         """ Checks whether the arguments and paths are valid.
 
         """
-        if self.feature_type not in ['envelope', 'an_rates']:
+        if self.feature_type not in ['envelope', 'an_rates', 'an_rates_cortical']:
             raise ValueError('feature must be `envelope` or `an_rates`.')
         if self.is_subcortex and self.feature_type == 'envelope':
             raise ValueError('is_subcortex can only be True if feature is `an_rates`.')
-        elif not self.is_subcortex and self.feature_type != 'envelope':
-            raise ValueError('`envelope` only works for `is_subcortex=False`.')
+        elif not self.is_subcortex and self.feature_type != 'envelope' and self.feature_type != 'an_rates_cortical':
+            raise ValueError('`envelope` or `an_rates_cortical` must be used for cortical data.')
 
         if self.directory.is_dir() is False:
             raise ValueError(f'File {self.eeg_file} does not exist.')
