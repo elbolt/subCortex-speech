@@ -6,7 +6,7 @@ from tqdm import tqdm
 import mne
 
 
-def create(wav_folder, tg_folder, out_folder, segments_list, config):
+def create(wav_folder: str, tg_folder: str, out_folder: str, segments_list: list, config: dict) -> None:
     """ Create feature from audio snips.
 
     This function creates a feature from audio snips. The feature is a 3D array with dimensions
@@ -33,7 +33,6 @@ def create(wav_folder, tg_folder, out_folder, segments_list, config):
         Configuration dictionary
 
     """
-    # Neurophysiology parameters
     final_epoch_length = config['envelope']['final_length']
     sfreq_target = config['envelope']['sfreq']
     final_bandpass = (

@@ -1,3 +1,11 @@
+"""" Run pipelines to extract envelope and speech features from the audiobook segments.
+
+Envelopes are directly extracted from the audio files, while speech features are extracted from the output of
+the AN model. AN rates are created twice, they were once extracted from the original speech wave, and once from the
+inverted speech wave. This step of the pipeline is documented in the subfolder `an_model`.
+
+"""
+
 import envelopes
 import an_rates_cortical
 import an_rates
@@ -9,13 +17,6 @@ mne.set_log_level('WARNING')
 
 
 if __name__ == '__main__':
-    """" Run pipelines to extract envelope and speech features from the audiobook segments.
-
-    Envelopes are directly extracted from the audio files, while speech features are extracted from the output of
-    the AN model. AN rates are created twice, they were once extracted from the original speech wave, and once from the
-    inverted speech wave. This step of the pipeline is documented in the subfolder `an_model`.
-
-    """
     config = load_config('config.yaml')
 
     print('Running: ', __file__)

@@ -12,7 +12,7 @@ import numpy as np
 import cochlea
 
 
-def get_an_rates(pressure_wave, sfreq, cfs):
+def get_an_rates(pressure_wave: np.ndarray, sfreq: float, cfs: np.ndarray) -> np.ndarray:
     """ Run the Zilany et al. 2014 model for a given pressure wave and characteristic frequency to get the auditory
     nerve (AN) firing rates.
 

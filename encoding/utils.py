@@ -1,13 +1,13 @@
 import yaml
 
 
-def load_config(config_path):
+def load_config(config_path: str) -> dict:
     """ Load configuration from YAML file. """
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
 
 
-def parse_arguments(default_subjects):
+def parse_arguments(default_subjects: list) -> list:
     """ Argument parser for parsing from command-line.
 
     """

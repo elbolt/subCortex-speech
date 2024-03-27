@@ -13,26 +13,14 @@ class EEGLoader():
     Vertex channel is set to Cz, or if Cz is bad, to Pz. The data is returned as MNE.raw object with bad channels and
     reference channels already set.
 
-    Parameters
-    ----------
-    subject_id : str
-        Subject ID
-    directory : str
-        directory containing the fif file
-    file_extension : str
-        File extension of the fif file
-    is_subcortex : bool | False
-        Whether the data is for subcortical analysis or not
-
-    Returns
+    Methods
     -------
-    raw : mne.io.Raw
-        Raw EEG data
-
-    Errors
-    ------
-    ValueError
-        If bad channels and reference channels overlap
+    configure_channels()
+        Sets bad channels and reference channels.
+    set_reference()
+        Loads data into memory and sets reference channels.
+    get_raw()
+        Returns the raw data.
 
     Examples
     --------
@@ -40,7 +28,30 @@ class EEGLoader():
     >>> raw = eeg_loader.get_raw()
 
     """
-    def __init__(self, subject_id, directory, file_extension, is_subcortex=False, is_ABR=False):
+    def __init__(
+        self,
+        subject_id: str,
+        directory: str,
+        file_extension: str,
+        is_subcortex: bool = False,
+        is_ABR: bool = False
+    ) -> None:
+        """ Loads raw EEG data.
+
+        Parameters
+        ----------
+        subject_id : str
+            Subject ID
+        directory : str
+            Directory where the data is located
+        file_extension : str
+            File extension of the data
+        is_subcortex : bool | False
+            Whether the data is for subcortical analysis or not
+        is_ABR : bool | False
+            Whether the ABR is extracted or not (`is_subcortex` must also be true)
+
+        """
         self.subject_id = subject_id
         self.directory = directory
         self.filename = f'{self.subject_id}{file_extension}'
@@ -58,20 +69,21 @@ class EEGLoader():
         self.configure_channels()
         self.set_reference()
 
-    def configure_channels(self):
+    def configure_channels(self) -> None:
         """ Sets bad channels and reference channels.
+
+        Bad channels are set based on previous visual data inspection stored in dictionaries.
+        Reference channels are set to the average mastoids or to T7 and T8, depending on the subject.
 
         """
         from utils import bad_audio_channels_dict, bad_ABR_channels_dict, subjects_bad_audio_refs, subjects_bad_ABR_refs
 
-        # Bad channels (from visual inspection)
         bad_channels_dict = bad_ABR_channels_dict if self.is_ABR else bad_audio_channels_dict
         subjects_bad_refs = subjects_bad_ABR_refs if self.is_ABR else subjects_bad_audio_refs
 
         self.bad_channels = bad_channels_dict[self.subject_id]
         self.raw_.info['bads'] = self.bad_channels
 
-        # Reference channels (mastoids or T7 and T8)
         if self.subject_id in subjects_bad_refs:
             self.ref_channels = ['T7', 'T8']
             print(f'Using reference channels: {self.ref_channels}.')
@@ -81,7 +93,7 @@ class EEGLoader():
         if self.subject_id in subjects_bad_refs and set(self.ref_channels).issubset(set(self.bad_channels)):
             print(f'Bad channels and reference channels overlap for subject {self.subject_id}!')
 
-    def set_reference(self):
+    def set_reference(self) -> None:
         """ Loads data into memory and sets reference channels. """
         self.raw_.load_data()
 
@@ -96,7 +108,7 @@ class EEGLoader():
 
         self.raw_.set_eeg_reference(self.ref_channels)
 
-    def get_raw(self):
+    def get_raw(self) -> mne.io.Raw:
         """ Returns the raw data. """
         if self.is_subcortex_:
             return self.raw_, self.vertex_channel
@@ -110,29 +122,16 @@ class EEGDownSegmenter():
     An optional high pass filter can be applied to the data as well. The epochs are corrected for trigger delay.
     An instance of this class directly returns a mne.Epochs object with the data segmented into epochs.
 
-    Parameters
-    ----------
-    raw : mne.io.Raw
-        Raw EEG data
-    subject_id : str
-        Subject ID
-    tmin : float
-        Start time of the epoch in seconds
-    tmax : float
-        End time of the epoch in seconds
-    decimator : int
-        Decimation factor by which the data is downsampled
-    highpass : float | None
-        High pass frequency in Hz, if None, no high pass filter is applied
-    is_subcortex : bool | False
-        Whether the data is for subcortical analysis or not
-    is_ABR : bool | False
-        Whether the ABR is extracted or not (`is_subcortex` must also be true)
-
-    Returns
+    Methods
     -------
-    epochs : mne.Epochs
-        Segmented epochs
+    anti_aliasing_filter()
+        Applies anti-aliasing filter to the raw data.
+    get_events()
+        Finds audiobook events in the raw data and accounts for trigger delay and participant-related problems.
+    create_epochs()
+        Creates epochs from the raw data.
+    get_epochs()
+        Returns the epochs.
 
     Examples
     --------
@@ -140,7 +139,39 @@ class EEGDownSegmenter():
     >>> raw = eeg_loader.get_raw()
 
     """
-    def __init__(self, raw, subject_id, tmin, tmax, decimator, highpass=None, is_subcortex=False, is_ABR=False):
+    def __init__(
+        self,
+        raw: mne.io.Raw,
+        subject_id: str,
+        tmin: float,
+        tmax: float,
+        decimator: int,
+        highpass: float = None,
+        is_subcortex: bool = False,
+        is_ABR: bool = False
+    ) -> None:
+        """ Initialize the EEGDownSegmenter class.
+
+        Parameters
+        ----------
+        raw : mne.io.Raw
+            Raw EEG data
+        subject_id : str
+            Subject ID
+        tmin : float
+            Start of the epoch in seconds
+        tmax : float
+            End of the epoch in seconds
+        decimator : int
+            Decimation factor
+        highpass : float | None
+            High pass filter frequency in Hz
+        is_subcortex : bool | False
+            Whether the data is for subcortical analysis or not
+        is_ABR : bool | False
+            Whether the ABR is extracted or not (`is_subcortex` must also be true)
+
+        """
         self.raw = raw
         self.subject_id = subject_id
         self.is_subcortex_ = is_subcortex
@@ -158,7 +189,7 @@ class EEGDownSegmenter():
 
         self.create_epochs()
 
-    def anti_aliasing_filter(self):
+    def anti_aliasing_filter(self) -> None:
         """ Applies anti-aliasing filter to the raw data
 
         An anti-aliasing low pass filter at 1/3 of the target frequency is applied to the raw data, the transition
@@ -171,7 +202,6 @@ class EEGDownSegmenter():
         """
         sfreq_goal = self.raw.info['sfreq'] / self.decimator
 
-        # Filter specifications
         lowpass = sfreq_goal / 3.0
         l_trans_bandwidth = sfreq_goal / 10.0
         h_trans_bandwidth = None if self.highpass_ is None else self.highpass_ / 4.0
@@ -187,7 +217,7 @@ class EEGDownSegmenter():
             phase=phase
         )
 
-    def get_events(self):
+    def get_events(self) -> None:
         """ Finds audiobook events in the raw data and accounts for trigger delay and participant-related problems.
 
         The event code for audio onset is "256". The delay from the transductor to the eardrum `delta_t` is 1.07 ms.
@@ -237,7 +267,12 @@ class EEGDownSegmenter():
         return self.epochs
 
 
-def clean_subcortex_signal(array, sfreq, threshold=100.0e-3, segment_duration=1.0):
+def clean_subcortex_signal(
+    array: np.ndarray,
+    sfreq: float,
+    threshold: float = 100.0e-3,
+    segment_duration: float = 1.0
+) -> np.ndarray:
     """ Cleans the EEG data by setting segments above a threshold to NaN.
 
     Parameters
@@ -257,7 +292,7 @@ def clean_subcortex_signal(array, sfreq, threshold=100.0e-3, segment_duration=1.
         Cleaned EEG data of shape (n_epochs, n_channels, n_samples).
 
     """
-    segment_length = int(sfreq * segment_duration)  # Number of samples in the segment to zero out
+    segment_length = int(sfreq * segment_duration)
 
     array_cleaned = array.copy()
 
@@ -269,7 +304,6 @@ def clean_subcortex_signal(array, sfreq, threshold=100.0e-3, segment_duration=1.
             start_idx = idx - segment_length // 2
             end_idx = idx + segment_length // 2
 
-            # "Zero" the segment (set to NaN)
             array_cleaned[i, 0, start_idx:end_idx] = np.nan
 
     return array_cleaned

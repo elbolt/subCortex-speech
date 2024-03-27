@@ -1,7 +1,16 @@
+import numpy as np
 from encoder_utils import FeatureTargetLoader, Preparer, Encoder
 
 
-def run_subcortical(subject, directory, alphas, tmin=-10e-3, tmax=30e-3, sfreq=4096, invert=False):
+def run_subcortical(
+    subject: str,
+    directory: str,
+    alphas: list,
+    tmin: float = -10e-3,
+    tmax: float = 30e-3,
+    sfreq: int = 4096,
+    invert: bool = False
+) -> tuple[np.array, float, np.array, dict, float]:
     """ Runs the subcortical encoding model.
 
     The data is loaded using the FeatureTargetLoader class, prepared using the Preparer class, and then encoded using
@@ -34,8 +43,8 @@ def run_subcortical(subject, directory, alphas, tmin=-10e-3, tmax=30e-3, sfreq=4
         Lags of the model.
     best_alpha : float
         Best alpha found by hyperparameter tuning.
-    """
 
+    """
     loader = FeatureTargetLoader(
         subject,
         directory,
@@ -62,7 +71,6 @@ def run_subcortical(subject, directory, alphas, tmin=-10e-3, tmax=30e-3, sfreq=4
 
     best_alpha, alpha_scores = encoder.tune_alpha(alphas=alphas)
 
-    # Fit model and get test score
     encoder.fit(alpha=best_alpha)
 
     response, test_score, lags = encoder.get_data()
@@ -70,7 +78,14 @@ def run_subcortical(subject, directory, alphas, tmin=-10e-3, tmax=30e-3, sfreq=4
     return response, test_score, lags, alpha_scores, best_alpha
 
 
-def run_cortical(subject, directory, alphas, tmin=-300e-3, tmax=600e-3, sfreq=128):
+def run_cortical(
+    subject: str,
+    directory: str,
+    alphas: list,
+    tmin: float = -300e-3,
+    tmax: float = 600e-3,
+    sfreq: int = 128
+) -> tuple[np.array, float, np.array, dict, float]:
     """
     Runs the subcortical encoding model.
 

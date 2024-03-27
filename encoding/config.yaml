@@ -52,6 +52,7 @@ results_cortex_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/TRF/weights/cort
 results_subcortex_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/TRF/weights/cortex/subcortex
 figures_dir: /Volumes/NeuroSSD/subCortex-speech/data/EEG/TRF/figures'
 
+# Regularization parameter grid search
 alphas:
   - 0.001
   - 0.01
@@ -77,4 +78,5 @@ cortex:
   tmin: -0.3
   tmax: 0.6
 
+# Plot results
 make_plot: False

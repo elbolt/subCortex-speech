@@ -8,7 +8,14 @@ import mne
 mne.set_log_level('WARNING')
 
 
-def cortex_pipeline(raw_dir, out_dir, aep_out_dir, file_extension, subjects_list, config):
+def cortex_pipeline(
+    raw_dir: str,
+    out_dir: str,
+    aep_out_dir: str,
+    file_extension: str,
+    subjects_list: list,
+    config: dict
+) -> None:
     """ Applies the prepreprocessing routine to extract the data for cortex encoding analysis and Auditory Evoked
     Potentials (aep).
 

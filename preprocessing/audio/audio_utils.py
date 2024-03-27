@@ -7,17 +7,24 @@ from scipy.io import wavfile
 
 
 class SpeechWaveExtractor:
-    """ Class to load audio data from a wav and TextGrid. """
-    def __init__(self, filename, wav_dir, tg_dir):
-        """
-        Initialize the SpeechWaveExtractor.
+    """ Class to load audio data from a wav and TextGrid.
 
-        My wavs are stereo wav files, with the first channel containing the speech and the second channel containing
-        an impulse vector coding for speech onest. The impulse time point is documented in the TextGrid file since
-        I used Praat to annotate the speech onset. Thus, the file `filename.wav` should be a stereo wav file, and the
-        file `filename.TextGrid` should contain the annotation of the speech onset in the first interval of the first
-        tier.
-        I structered the class such that the names of the wav and TextGrid files are the same.
+    My wavs are stereo wav files, with the first channel containing the speech and the second channel containing
+    an impulse vector coding for speech onest. The impulse time point is documented in the TextGrid file since
+    I used Praat to annotate the speech onset. Thus, the file `filename.wav` should be a stereo wav file, and the
+    file `filename.TextGrid` should contain the annotation of the speech onset in the first interval of the first
+    tier. I structered the class such that the names of the wav and TextGrid files are the same.
+
+    Methods
+    -------
+    extract_wave()
+        Extract the speech wave from the wav file.
+    get_wave()
+        Get speech wave and its sampling frequency.
+
+    """
+    def __init__(self, filename: str, wav_dir: str, tg_dir: str) -> None:
+        """ Initialize the SpeechWaveExtractor.
 
         Parameters
         ----------
@@ -27,6 +34,7 @@ class SpeechWaveExtractor:
             Directory containing the wav
         tg_dir : str
             Directory containing the Praat TextGrids
+
         """
         self.filename = filename
         self.wav_dir = wav_dir
@@ -34,7 +42,7 @@ class SpeechWaveExtractor:
         self.sfreq = None
         self.wave = None
 
-    def extract_wave(self):
+    def extract_wave(self) -> None:
         """
         Extract speech wave from an audio segment and remove silent seconds from the beginning of the segment.
         """
@@ -53,7 +61,7 @@ class SpeechWaveExtractor:
         self.sfreq = sfreq
         self.wave = wave.astype(np.float64)
 
-    def get_wave(self):
+    def get_wave(self) -> tuple[int, np.ndarray]:
         """
         Get the speech wave.
 
@@ -71,8 +79,15 @@ class SpeechWaveExtractor:
 
 
 class NerveRatesExtractor(SpeechWaveExtractor):
-    """ Subclass of SpeechWaveExtractor to load nerve rates. """
-    def extract_wave(self):
+    """ Subclass of SpeechWaveExtractor to load nerve rates
+
+    Methods
+    -------
+    extract_wave()
+        Extract the speech wave from the nerve rates file.  
+
+    """
+    def extract_wave(self) -> None:
         """
         Extract speech wave from an audio segment and remove silent seconds from the beginning of the segment.
 
@@ -98,8 +113,24 @@ class WaveProcessor():
     envelope. The class is initialized with a file name, directory, and TextGrid directory. The sampling frequency
     and speech wave signal are updated after each processing step.
 
+    Methods
+    -------
+    downsample()
+        Downsample the speech wave to the target sampling frequency.
+    extract_Gammatone_envelope()
+        Extract the Gammatone envelope from the speech wave.
+    get_wave()
+        Get the speech wave.
+
     """
-    def __init__(self, filename, wav_dir, tg_dir, is_subcortex=False, use_nerve_rates=False):
+    def __init__(
+        self,
+        filename: str,
+        wav_dir: str,
+        tg_dir: str,
+        is_subcortex: bool = False,
+        use_nerve_rates: bool = False
+    ) -> None:
         """ Initialize the WaveProcessor.
 
         Parameters
@@ -127,8 +158,11 @@ class WaveProcessor():
 
         self.sfreq, self.wave = extractor.get_wave()
 
-    def downsample(self, sfreq_goal, highpass=None, anti_aliasing='1/3'):
+    def downsample(self, sfreq_goal: float, highpass: float = None, anti_aliasing: str = '1/3') -> None:
         """ Downsample the speech wave to the target sampling frequency.
+
+        Anti-alias filter is applied to the speech wave before resampling at 1/3 of the target sampling frequency
+        if not specified otherwise. Transition bandwidths are set to 1/10 of the target sampling frequency.
 
         Parameters
         ----------
@@ -138,7 +172,7 @@ class WaveProcessor():
             Highpass frequency for anti-aliasing filter.
         anti_aliasing : str
             Anti-aliasing filter cutoff. If '1/3', the cutoff is set to 1/3 of the target sfreq,
-            otherwise it is set to the given value.
+            otherwise it is set to the given value
 
         """
         lowpass = sfreq_goal / 3.0 if anti_aliasing == '1/3' else int(anti_aliasing)
@@ -146,7 +180,6 @@ class WaveProcessor():
         h_trans_bandwidth = None if highpass is None else highpass / 4.0
         phase = 'minimum' if self.is_subcortex else 'zero'
 
-        # Anti-aliasing filter at 1/3 of the new sfreq, with transition bandwidth of 1/10 of the target sfreq
         wave_filtered = mne.filter.filter_data(
             self.wave,
             sfreq=self.sfreq,
@@ -164,8 +197,24 @@ class WaveProcessor():
         self.sfreq = sfreq_goal
         self.wave = wave_resampled
 
-    def extract_Gammatone_envelope(self, num_filters=24, freq_range=(100, 4000)):
-        """ Extracts the Gammatone envelope from the speech wave. """
+    def extract_Gammatone_envelope(
+        self, num_filters: int = 24,
+        freq_range: tuple = (100, 4000),
+        compression: float = 0.3
+    ) -> None:
+        """ Extracts the Gammatone envelope from the speech wave through using a filterbank, then compressing the
+        envelope and averaging across filters.
+
+        Parameters
+        ----------
+        num_filters : int
+            Number of filters in the filterbank.
+        freq_range : tuple of (min_freq, max_freq)
+            Frequency range of the filterbank.
+        compression : float
+            Exponent for compressing the envelope.
+
+        """
         from scipy import signal
 
         filterbank = WaveProcessor.gammatone_filterbank(
@@ -175,25 +224,40 @@ class WaveProcessor():
         )
 
         gt_env = np.vstack([signal.filtfilt(filterbank[filt, :], 1.0, self.wave) for filt in range(num_filters)])
-
-        compression = 0.3
         gt_env = np.abs(gt_env)
         gt_env = np.power(gt_env, compression)
         gt_env = np.mean(gt_env, axis=0)
 
         self.wave = gt_env
 
-    def get_wave(self):
+    def get_wave(self) -> tuple[int, np.ndarray]:
+        """ Get the speech wave.
+
+        Returns
+        -------
+        sfreq : float
+            Sampling frequency of the wav
+        wave : np.ndarray
+            Speech wave array of the wav
+
+        """
         return self.sfreq, self.wave
 
     @staticmethod
-    def gammatone_filterbank(sfreq, num_filters, freq_range):
-        """
-        Generate a Gammatone filterbank (Glasberg & Moore, 1990).
+    def gammatone_filterbank(sfreq: float, num_filters: int, freq_range: tuple) -> np.ndarray:
+        """ Generate a Gammatone filterbank (Glasberg & Moore, 1990).
 
         This function generates a Gammatone filterbank, which is a set of bandpass filters that simulate the frequency
         response of the human auditory system. The filters are designed to be similar to the response of the cochlea,
         which is the organ in the inner ear responsible for processing sound.
+
+        Pipeline:
+        1. Compute Equivalent Rectangular Bandwidth (ERB) for given frequency range
+        2. Compute center frequencies in ERB and Hz
+        3. Compute filter bandwidths and Q factors
+        4. Compute filter bank
+        5. Apply envelope to sine wave
+        6. Store in filter bank
 
         Parameters
         ----------
@@ -217,48 +281,44 @@ class WaveProcessor():
 
         """
 
-        # Compute ERB (Equivalent Rectangular Bandwidth)
         min_freq, max_freq = freq_range
         erb_min = 24.7 * (4.37 * min_freq / 1000 + 1)
         erb_max = 24.7 * (4.37 * max_freq / 1000 + 1)
 
-        # Compute center frequencies in ERB and Hz
         center_freqs_erb = np.linspace(erb_min, erb_max, num_filters)
         center_freqs_hz = (center_freqs_erb / 24.7 - 1) / 4.37 * 1000
 
-        # Compute filter bandwidths and Q factors
         q = 1.0 / (center_freqs_erb * 0.00437 + 1.0)
         bandwidths = center_freqs_hz * q
 
-        # Compute filter bank
         filter_bank = np.zeros((num_filters, 4))
         t = np.arange(4) / sfreq
         for i in range(num_filters):
             c = 2 * np.pi * center_freqs_hz[i]
             b = 1.019 * 2 * np.pi * bandwidths[i]
 
-            # Compute envelope and sine wave
             envelope = (c ** 4) / (b * np.math.factorial(4)) * t ** 3 * np.exp(-b * t)
             sine_wave = np.sin(c * t)
 
-            # Apply envelope to sine wave and store in filter bank
             filter_bank[i, :] = sine_wave * envelope
 
         return filter_bank
 
     @staticmethod
-    def padding(array, length, sfreq, pad_value=np.nan):
+    def padding(array: np.ndarray, length: float, sfreq: float, pad_value=np.nan) -> np.ndarray:
         """ Pads the input array with either NaN or 0 values to match the desired length in seconds,
         based on the given sampling frequency.
 
         Parameters
         ----------
         array : np.ndarray
-            Array to be padded.
+            Input array to be padded.
         length : float
-            Desired length of the array in seconds.
+            Desired length in seconds.
         sfreq : float
             Sampling frequency of the array.
+        pad_value : float
+            Value to pad the array with.
 
         Returns
         -------
@@ -272,7 +332,7 @@ class WaveProcessor():
         return array_padded
 
 
-def load_config(config_path):
+def load_config(config_path: str) -> dict:
     """ Load configuration from YAML file. """
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)

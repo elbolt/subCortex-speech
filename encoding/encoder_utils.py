@@ -1,5 +1,4 @@
 import numpy as np
-
 from collections import defaultdict
 from mne.decoding import TimeDelayingRidge, ReceptiveField
 from sklearn.model_selection import train_test_split, LeaveOneOut
@@ -14,19 +13,39 @@ class FeatureTargetLoader():
 
     Note: The paths in this class are very specific to my own data structure and would need a lot of adaption.
 
-    Parameters
-    ----------
-    subject_id : str
-        Subject ID.
-    directory : pathlib.Path
-        Path to the data directory.
-    feature_type : str | 'envelope'
-        Type of feature to load. Can be `envelope`, `an_rates` or `an_rates_cortical`.
-    is_subcortex : bool | False
-        Whether to use subcortical data or not.
+    Methods
+    -------
+    set_file_names()
+        Sets the file names of the feature and EEG data.
+    check_arguments()
+        Checks whether the arguments and paths are valid.
+    load_data()
+        Loads the feature and EEG data.
+    get_data()
+        Returns the feature and EEG data.
 
     """
-    def __init__(self, subject_id, directory, feature_type='envelope', is_subcortex=False):
+    def __init__(
+        self,
+        subject_id: str,
+        directory: str,
+        feature_type: str = 'envelope',
+        is_subcortex: bool = False
+    ) -> None:
+        """ Initialize the FeatureTargetLoader class.
+
+        Parameters
+        ----------
+        subject_id : str
+            Subject ID.
+        directory : pathlib.Path
+            Path to the data directory.
+        feature_type : str | 'envelope'
+            Type of feature to load. Can be `envelope`, `an_rates` or `an_rates_cortical`.
+        is_subcortex : bool | False
+            Whether to use subcortical data or not.
+
+        """
         self.subject_id = subject_id
         self.directory = directory
         self.feature_type = feature_type
@@ -116,7 +135,7 @@ class FeatureTargetLoader():
         if self.subject_id == 'p45':
             self.feature = np.delete(self.feature, 0, axis=0)
 
-    def get_data(self):
+    def get_data(self) -> tuple[np.ndarray, np.ndarray]:
         """ Returns the feature and EEG data.
 
         Returns
@@ -136,19 +155,35 @@ class FeatureTargetLoader():
 class Preparer():
     """ Class to prepare feature (speech feature) and target (EEG) data for a given subject and analysis type.
 
-    Parameters
-    ----------
-    subject_id : str
-        Subject ID.
-    feature : np.ndarray
-        feature data.
-    eeg : np.ndarray
-        EEG data.
-    is_subcortex : bool | False
-        Whether to use subcortical data or not.
+    Methods
+    -------
+    reshape_data()
+        Reshapes the data.
+    get_train_test_set()
+        Split data into train/test sets.
+    normalize_eeg()
+        Applies global normalization (z-scoring) to the eeg data.
+    normalize_feature()
+        Applies global normalization (z-scoring) to the feature data.
+    get_data()
+        Returns the feature and EEG data.
 
     """
-    def __init__(self, subject_id, feature, eeg, is_subcortex=False):
+    def __init__(self, subject_id: str, feature: np.ndarray, eeg: np.ndarray, is_subcortex: bool = False) -> None:
+        """ Initialize the Preparer class.
+
+        Parameters
+        ----------
+        subject_id : str
+            Subject ID.
+        feature : np.ndarray
+            feature data.
+        eeg : np.ndarray
+            EEG data.
+        is_subcortex : bool | False
+            Whether to use subcortical data or not.
+
+        """
         self.feature = feature
         self.eeg = eeg
         self.is_subcortex = is_subcortex
@@ -160,7 +195,7 @@ class Preparer():
         self.get_train_test_set()
         self.normalize_feature()
 
-    def reshape_data(self):
+    def reshape_data(self) -> None:
         """ Reshapes the data.
 
         mne.Epochs.get_data() retruns array of shape (n_epochs, n_channels, n_times);
@@ -170,7 +205,7 @@ class Preparer():
         self.feature = np.transpose(self.feature, (2, 0, 1))
         self.eeg = np.transpose(self.eeg, (2, 0, 1))
 
-    def get_train_test_set(self):
+    def get_train_test_set(self) -> None:
         """ Split data into train/test sets using a seed for reproducibility.
 
         """
@@ -187,7 +222,7 @@ class Preparer():
         self.eeg_train = self.eeg[:, train_indices, :]
         self.eeg_test = self.eeg[:, test_indices, :]
 
-    def normalize_eeg(self):
+    def normalize_eeg(self) -> None:
         """ Applies global normalization (z-scoring) to the eeg data and replaces NaN values with 0.0 in subcortical
         data.
 
@@ -198,7 +233,7 @@ class Preparer():
 
         self.eeg = eeg
 
-    def normalize_feature(self):
+    def normalize_feature(self) -> None:
         """ Applies global normalization (z-scoring) to the feature data and replaces NaN values with 0.0.
 
         The test data are normalized using the mean and standard deviation of the train data.
@@ -220,32 +255,46 @@ class Preparer():
 class Encoder():
     """ Class to run the neural encoding model pipeline.
 
-    Parameters
-    ----------
-    feature_train : np.ndarray
-        feature data for training.
-    feature_test : np.ndarray
-        feature data for testing.
-    eeg_train : np.ndarray
-        EEG data for training.
-    eeg_test : np.ndarray
-        EEG data for testing.
-    tmin : float
-        Start time of the receptive field.
-    tmax : float
-        End time of the receptive field.
-    sfreq : float
-        Sampling frequency of the data.
-
     Methods
     -------
-    tune_alpha(alphas, tmin=None, tmax=None, sfreq=None)
+    tune_alpha()
         Tune alpha parameter for TimeDelayingRidge estimator.
-    fit(alpha)
-        Fit the model using the best alpha parameter.
+    fit()
+        Fit the model using a given alpha parameter.
+    get_data()
+        Returns the response, test score, and lags of the model.
 
     """
-    def __init__(self, feature_train, feature_test, eeg_train, eeg_test, tmin, tmax, sfreq):
+    def __init__(
+        self,
+        feature_train: np.ndarray,
+        feature_test: np.ndarray,
+        eeg_train: np.ndarray,
+        eeg_test: np.ndarray,
+        tmin: float,
+        tmax: float,
+        sfreq: float
+    ) -> None:
+        """ Initialize the Encoder class.
+
+        Parameters
+        ----------
+        feature_train : np.ndarray
+            feature data for training.
+        feature_test : np.ndarray
+            feature data for testing.
+        eeg_train : np.ndarray
+            EEG data for training.
+        eeg_test : np.ndarray
+            EEG data for testing.
+        tmin : float
+            Start time of the receptive field.
+        tmax : float
+            End time of the receptive field.
+        sfreq : float
+            Sampling frequency of the data.
+
+        """
         self.tmin = tmin
         self.tmax = tmax
         self.sfreq = sfreq
@@ -255,7 +304,13 @@ class Encoder():
         self.eeg_train = eeg_train
         self.eeg_test = eeg_test
 
-    def tune_alpha(self, alphas, tmin=None, tmax=None, sfreq=None):
+    def tune_alpha(
+        self,
+        alphas: list,
+        tmin: float = None,
+        tmax: float = None,
+        sfreq: float = None
+    ) -> tuple[float, dict]:
         """ Tune alpha parameter for TimeDelayingRidge estimator.
 
         The method applies leave-one-out cross-validation to the eeg epochs left in the training data.
@@ -272,12 +327,18 @@ class Encoder():
         sfreq : float | None
             Sampling frequency of the data.
 
+        Returns
+        -------
+        best_alpha : float
+            Best alpha parameter found by hyperparameter tuning.
+        scores : dict
+            Dictionary of scores for each alpha.
+
         """
         tmin = self.tmin if tmin is None else tmin
         tmax = self.tmax if tmax is None else tmax
         sfreq = self.sfreq if sfreq is None else sfreq
 
-        # Leave-one-out cross-validation
         loo = LeaveOneOut()
         scores = defaultdict(float)
         best_score = -np.inf
@@ -285,11 +346,9 @@ class Encoder():
         scores = defaultdict(float)
         folds = self.eeg_train.shape[1]
 
-        # Loop over alphas
         for alpha in alphas:
             desc = f'alpha {alpha:16.3f}'
 
-            # Loop over folds and perform cross-validation
             for train_indices, validation_index in tqdm(loo.split(np.arange(folds)), total=folds, desc=desc):
                 feature_train = self.feature_train[:, train_indices, :]
                 feature_validation = self.feature_train[:, validation_index, :]
@@ -332,7 +391,7 @@ class Encoder():
 
         return best_alpha, scores
 
-    def fit(self, alpha):
+    def fit(self, alpha: float):
         """ Fit the model using a given alpha parameter. """
         estimator = TimeDelayingRidge(
             tmin=self.tmin,
@@ -352,7 +411,7 @@ class Encoder():
 
         model.fit(self.feature_train, self.eeg_train)
 
-        score = model.score(self.feature_test, self.eeg_test).mean()  # mean across channels
+        score = model.score(self.feature_test, self.eeg_test).mean()
 
         response = model.coef_.squeeze()
 
@@ -361,5 +420,6 @@ class Encoder():
         self.response = response
         self.test_score = score
 
-    def get_data(self):
+    def get_data(self) -> tuple[np.ndarray, float, np.ndarray]:
+        """ Returns the response, test score, and lags of the model. """
         return self.response, self.test_score, self.lags

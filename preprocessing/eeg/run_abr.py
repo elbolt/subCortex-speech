@@ -8,7 +8,7 @@ import mne
 mne.set_log_level('WARNING')
 
 
-def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
+def abr_pipeline(raw_dir: str, out_dir: str, file_extension: str, default_subjects: list, config: dict) -> None:
     """ Applies the prepreprocessing routine to extract the Auditory Brainstem Response (ABR) response. The filtering
     pipeline is identical to `run_cortex.py`.
 
@@ -26,12 +26,12 @@ def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
     ----------
     raw_dir : str
         Path to raw EEG data.
-    file_extension : str
-        File extension of raw EEG data files.
     out_dir : str
-        Path to out folder where preprocessed data will be stored.
-    subjects_list : list
-        List of participant IDs to be processed.
+        Path to save the ABR responses.
+    file_extension : str
+        File extension of the raw data.
+    default_subjects : list
+        List of subject IDs.
     config : dict
         Configuration dictionary.
 
@@ -52,7 +52,6 @@ def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
     clean_threshold_abr = config['neurophysiology']['clean_threshold']['abr']
 
     subjects = parse_arguments(default_subjects)
-    # no_epochs = np.zeros(len(subjects)) * np.nan
 
     # Loop over subjects
     for _, subject_id in enumerate(subjects):
@@ -102,7 +101,6 @@ def abr_pipeline(raw_dir, out_dir, file_extension, default_subjects, config):
         filename = os.path.join(out_dir, f'{subject_id}.npy')
         print(f'Saving: {filename}')
         np.save(filename, data)
-        # np.save('no_epochs.npy', no_epochs)
 
 
 if __name__ == '__main__':
@@ -112,7 +110,6 @@ if __name__ == '__main__':
     eeg_config = load_config('eeg_config.yaml')
     subjects = config['subjects']
 
-    # Paths to folders
     folders = {key: Path(value) for key, value in config['directories'].items()}
     raw_dir = folders['abr_raw_dir']
     out_dir = folders['abr_dir']
