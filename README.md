@@ -3,7 +3,7 @@
 
 ## Description
 
-This repository contains the pipelines for the electroencephalography (EEG) and the audio signal preprocessing encoding models of our paper entitled "Auditory encoding of natural speech at subcortical and cortical levels is not indicative of cognitive decline", currently under revision.
+This repository contains the pipelines for the electroencephalography (EEG) and the audio signal preprocessing encoding models of our paper entitled "Auditory encoding of natural speech at subcortical and cortical levels is not indicative of cognitive decline", accepted for publication at eNeuro.
 
 We share the code for reasons of transparency. The data—EEG and audio files—cannot (yet) be shared. The code is adapted to our environment and data infrastructure and cannot be executed without adjustments.
 

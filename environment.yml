@@ -375,7 +375,9 @@ dependencies:
       - astroid==3.0.2
       - dill==0.3.7
       - isort==5.13.2
+      - markdown-it-py==3.0.0
       - mccabe==0.7.0
+      - mdurl==0.1.2
       - pep8==1.7.1
       - pylint==3.0.3
       - textgrid==1.5

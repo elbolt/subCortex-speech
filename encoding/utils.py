@@ -1,4 +1,5 @@
 import yaml
+import argparse
 
 
 def load_config(config_path: str) -> dict:
@@ -8,11 +9,7 @@ def load_config(config_path: str) -> dict:
 
 
 def parse_arguments(default_subjects: list) -> list:
-    """ Argument parser for parsing from command-line.
-
-    """
-    import argparse
-
+    """ Argument parser for parsing from command-line. """
     parser = argparse.ArgumentParser(description='Parsing subjects for encoding analysis.')
     parser.add_argument('-s', '--subjects', type=str, help='Subject numbers separated by commas (no spaces)')
     args = parser.parse_args()
