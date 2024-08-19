@@ -17,7 +17,7 @@ We share the code for reasons of transparency. The data—EEG and audio files—
 * The pipeline for the encoding analyses is located in the `encoding` folder.
 * Please note that the TRF model is referred to in the scripts as "encoding model" and "encoder" and the regularization parameter λ as "alpha"
 
-![Coding models and evoked responses obtained through our pipeline.](responses.png)
+![Enoding models and evoked responses obtained through our pipeline.](responses.png)
 
 
 ## Acknowledgments
