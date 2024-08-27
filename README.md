@@ -3,7 +3,7 @@
 
 ## Description
 
-This repository contains the data pipelines described in "Data preprocessing" and "TRF modeling" in our paper entitled "Auditory encoding of natural speech at subcortical and cortical levels is not indicative of cognitive decline", [doi:10.1523/eNeuro.0545-23.2024](https://doi.org/10.1523/ENEURO.0545-23.2024).
+This repository contains the data pipelines described in *Data preprocessing* and *TRF modeling* in our paper entitled *Auditory encoding of natural speech at subcortical and cortical levels is not indicative of cognitive decline*, [doi:10.1523/eNeuro.0545-23.2024](https://doi.org/10.1523/ENEURO.0545-23.2024).
 
 We share the code for reasons of transparency. The data—EEG and audio files—cannot be shared, but are available upon request. The code is adapted to our environment and data infrastructure and cannot be executed without adjustments.
 
